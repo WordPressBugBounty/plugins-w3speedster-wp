@@ -1,0 +1,13 @@
+li#toplevel_page_w3_speedster .wp-menu-image > img {
+    opacity: 1;
+    max-width: 19px;
+    height: auto;
+    padding: 0;
+    object-fit: contain;
+}
+
+li#toplevel_page_w3_speedster .wp-menu-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
