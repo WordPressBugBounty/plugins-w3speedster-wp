@@ -6,7 +6,7 @@ Plugin Name: W3Speedster Pro
 
 Description: Speedup the site with good scores on google page speed test and Gtmetrix
 
-Version: 7.24
+Version: 7.25
 
 Author: W3speedster
 
@@ -33,11 +33,12 @@ if (!defined('W3SPEEDSTER_WP_CONTENT_BASENAME')) {
 	define("W3SPEEDSTER_WP_CONTENT_DIR", dirname(W3SPEEDSTER_WP_PLUGIN_DIR));
 	define("W3SPEEDSTER_WP_CONTENT_BASENAME", basename(W3SPEEDSTER_WP_CONTENT_DIR));
 }
-define( 'W3SPEEDSTER_PLUGIN_VERSION', '7.24' );
-define( 'W3SPEEDSTER_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define( 'W3SPEEDSTER_PLUGIN_VERSION', '7.25' );
+define( 'W3SPEEDSTER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'W3SPEEDSTER_PLUGIN_FILE', __FILE__ );
-define( 'W3SPEEDSTER_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-require_once(W3SPEEDSTER_PLUGIN_DIR . 'includes/class_init.php');
+define( 'W3SPEEDSTER_URL', plugin_dir_url( __FILE__ ) );
+require_once(W3SPEEDSTER_DIR . 'includes/core.php');
+require_once(W3SPEEDSTER_DIR . 'includes/init.php');
 
 
 function W3SpeedsterMandatoryConfigAdminNotice() {
@@ -64,7 +65,7 @@ function w3SpeedsterActivate(){
 }
 register_deactivation_hook( __FILE__, 'w3SpeedsterDeactivate' );
 function w3SpeedsterDeactivate(){
-	require_once(W3SPEEDSTER_PLUGIN_DIR . 'admin/class_admin.php');
+	require_once(W3SPEEDSTER_DIR . 'admin/admin-init.php');
 	$w3_speedster_admin = new W3Speedster\w3speedster_admin();
 	$w3_speedster_admin->w3SpeedsterRemoveHtmlCacheCode();
 	if ( wp_next_scheduled( 'w3_cache_size' ) ) {
@@ -108,7 +109,7 @@ function w3speedsterAddCustomCronIntervals($schedules) {
 	return $schedules;
 }
 function w3speedsterOptimizeImageOnUpload($attach_id){
-	require_once(W3SPEEDSTER_PLUGIN_DIR . 'includes/class_image.php');
+	require_once(W3SPEEDSTER_DIR . 'includes/image-optimize.php');
 	$w3_speedster_opt_img = new W3Speedster\w3speedster_optimize_image();
 	 if(!empty($w3_speedster_opt_img->settings['opt_upload'])){
 		return $w3_speedster_opt_img->w3speedsterOptimizeSingleImage($attach_id);
@@ -118,7 +119,7 @@ function w3speedsterOptimizeImageOnUpload($attach_id){
 }
 add_action( 'add_attachment','w3speedsterOptimizeImageOnUpload');
 function w3speedsterChangeImageName($metadata, $attachment_id, $context){
-	require_once(W3SPEEDSTER_PLUGIN_DIR . 'includes/class_image.php');
+	require_once(W3SPEEDSTER_DIR . 'includes/image-optimize.php');
 	$w3_speedster_opt_img = new W3Speedster\w3speedster_optimize_image();
 	return $w3_speedster_opt_img->w3speedsterChangeImageName($metadata, $attachment_id, $context);
 }
@@ -129,32 +130,43 @@ add_action( 'w3speedup_preload_css_min', 'w3speedsterPreloadCssCallback' );
 add_action( 'w3speedster_check_cron_needs_running', 'w3speedsterCheckCronNeedsRunningCallback' );
 function w3speedsterCheckCronNeedsRunningCallback(){
 	global $wpdb;
-	require_once(W3SPEEDSTER_PLUGIN_DIR . 'admin/class_admin.php');
+	require_once(W3SPEEDSTER_DIR . 'admin/admin-init.php');
 	$w3_speedster_admin = new W3Speedster\w3speedster_admin();
 	$result = $w3_speedster_admin->settings;
-	if(w3CheckMultisite()){
-		$img_to_opt = 0;
-		$blogs = get_sites();
-		foreach( $blogs as $b ){
-			$img_to_opt += $wpdb->get_var($wpdb->prepare("SELECT count(ID) FROM %s%s_posts WHERE post_type='attachment'",array($wpdb->prefix,$b->blog_id)));
-		} 
-	}else{
-		$img_to_opt = $wpdb->get_var("SELECT count(ID) FROM {$wpdb->prefix}posts WHERE post_type='attachment'");
-	}
-	$opt_offset = w3GetOption('w3speedup_opt_offset');
-	$img_remaining = (int)$img_to_opt-(int)$opt_offset;
-	if(!empty($result['enable_background_optimization']) && $img_remaining > 0){
-		if ( ! wp_next_scheduled( 'w3speedster_image_optimization' ) ) {
-			wp_schedule_event( time(), 'w3speedup_every_minute', 'w3speedster_image_optimization' );
-		}
-	}else{
+	global $w3_network_option;
+	if(empty($result['enable_background_optimization'])){
 		if ( wp_next_scheduled( 'w3speedster_image_optimization' ) ) {
 			wp_clear_scheduled_hook('w3speedster_image_optimization');
 		}
+	}else{
+		if(w3CheckMultisite() && empty($w3_network_option['manage_site_separately'])){
+			$img_to_opt = 0;
+			$blogs = get_sites();
+			foreach ($blogs as $b) {
+				$table_name = $wpdb->base_prefix.$b->blog_id.'_posts';
+				if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table_name ) ) ) == $table_name ) {
+					$img_to_opt += $wpdb->get_var(
+					$wpdb->prepare("SELECT COUNT(ID) FROM `$table_name` WHERE post_type = %s",array('attachment'))
+					);
+				}
+			}
+		}else{
+			$img_to_opt = $wpdb->get_var("SELECT count(ID) FROM {$wpdb->prefix}posts WHERE post_type='attachment'");
+		}
+		$opt_offset = w3GetOption('w3speedup_opt_offset');
+		$img_remaining = (int)$img_to_opt-(int)$opt_offset;
+		if(!empty($result['enable_background_optimization']) && $img_remaining > 0){
+			if ( ! wp_next_scheduled( 'w3speedster_image_optimization' ) ) {
+				wp_schedule_event( time(), 'w3speedup_every_minute', 'w3speedster_image_optimization' );
+			}
+		}else{
+			if ( wp_next_scheduled( 'w3speedster_image_optimization' ) ) {
+				wp_clear_scheduled_hook('w3speedster_image_optimization');
+			}
+		}
 	}
-	
 	$preload_css = w3GetOption('w3speedup_preload_css');
-	if(count($preload_css) > 0 ){
+	if(count($preload_css) > 0 && !empty($this->settings['enable_background_critical_css'])){
 		if ( ! wp_next_scheduled( 'w3speedup_preload_css_min' ) ) {
 			wp_schedule_event( time(), 'w3speedup_every_minute', 'w3speedup_preload_css_min' );
 		}
@@ -166,7 +178,7 @@ function w3speedsterCheckCronNeedsRunningCallback(){
 }
 
 function w3speedsterImageOptimizationCallback(){
-	require_once(W3SPEEDSTER_PLUGIN_DIR . 'includes/class_image.php');
+	require_once(W3SPEEDSTER_DIR . 'includes/image-optimize.php');
 
     $w3_speedster_opt_img = new W3Speedster\w3speedster_optimize_image();
 	
@@ -209,7 +221,8 @@ function w3speedsterPreloadCssAjaxCallback(){
 	$response = w3speedsterPreloadCssCallback();
 	$error = w3GetOption('w3speedup_critical_css_error');
 	$total = (int)w3GetOption('w3speedup_preload_css_total');
-	$created = $total - count(w3GetOption('w3speedup_preload_css'));	
+	$que = w3GetOption('w3speedup_preload_css');
+	$created = $total - count(is_array($que) ? $que : array());
     $runningUrl = w3GetOption('w3speedup_critical_running_url');
 	if(!empty($error)){
 		echo wp_json_encode(array('error',$error,$total,$created,$runningUrl));
@@ -233,7 +246,7 @@ function w3GetOption($option){
 			$w3_network_option = get_site_option('w3_speedup_option', true);
 		}
 	}
-	if(w3CheckMultisite() && (is_network_admin() || empty($w3_network_option['manage_site_separately']))){
+	if(w3CheckMultisite() && (empty($w3_network_option['manage_site_separately']))){
 		$settings = get_site_option($option, true);
 	}else{
 		$settings = get_option( $option, true );
@@ -247,7 +260,7 @@ function w3UpdateOption($option, $value, $autoload = null){
 			$w3_network_option = get_site_option('w3_speedup_option', true);
 		}
 	}
-	if(w3CheckMultisite() && (is_network_admin() || empty($w3_network_option['manage_site_separately']))){
+	if(w3CheckMultisite() && (empty($w3_network_option['manage_site_separately']))){
 		if(update_site_option( $option,$value,$autoload)){
 			return 1;
 		}else{
@@ -278,12 +291,12 @@ add_action( 'w3_check_key', 'w3CheckKeyCallback' );
 add_action( 'w3_cache_size', 'w3CacheSizeCallback' );
 add_action('w3speedsterPreloadCacheCronJob','w3speedsterPreloadCacheCronJobCallback');
 function w3CheckKeyCallback(){
-	require_once(W3SPEEDSTER_PLUGIN_DIR . 'admin/class_admin.php');
+	require_once(W3SPEEDSTER_DIR . 'admin/admin-init.php');
 	$w3_speedster_admin = new W3Speedster\w3speedster_admin(); 
     $w3_speedster_admin->w3CheckLicenseKey();
 }
 function w3CacheSizeCallback(){
-	require_once(W3SPEEDSTER_PLUGIN_DIR . 'admin/class_admin.php');
+	require_once(W3SPEEDSTER_DIR . 'admin/admin-init.php');
 	$w3_speedster_admin = new W3Speedster\w3speedster_admin(); 
     $w3_speedster_admin->w3CacheSizeCallback();
 }
@@ -396,7 +409,7 @@ function w3CachePurgeActionJs() {
 }
 function w3ToolbarLinkToDeleteCache( $wp_admin_bar ) {
 
-	$filesize = round(get_option('w3_speedup_filesize',false),2);
+	$filesize = round(w3GetOption('w3_speedup_filesize',false),2);
 	$clear_cache_text = '';
 	$clear_cache_id = '';
 	if(is_page()){
@@ -490,8 +503,10 @@ function w3ToolbarLinkToDeleteCache( $wp_admin_bar ) {
 
 
 function w3speedsterRoleCaps(){
-    $role = get_role('administrator');
-	$role->add_cap('w3speedster_settings', true);
+	if(!is_multisite()){
+		$role = get_role('administrator');
+		$role->add_cap('w3speedster_settings', true);
+	}
 }
 add_action('init', 'w3speedsterRoleCaps', 11);
 function w3SpeedsterRegisterNetworkOptionsPage() {
@@ -501,23 +516,24 @@ function w3SpeedsterRegisterSiteOptionsPage() {
 	add_menu_page('W3speedster', 'W3speedster', 'manage_options', 'w3_speedster', 'w3SpeedsterOptionsPage', plugins_url('assets/images/w3speedster-icon.webp', __FILE__),81);
 }
 function w3SpeedsterOptionsPage(){
-	load_template( W3SPEEDSTER_PLUGIN_DIR . "/admin/admin.php");	
+	global $w3admin;
+	load_template( W3SPEEDSTER_DIR . "/admin/admin.php",null,['settings'=>$w3admin]);	
 }
 
 function w3SpeedsterCachePurgeCallback(){
-	require_once(W3SPEEDSTER_PLUGIN_DIR . 'admin/class_admin.php');
+	require_once(W3SPEEDSTER_DIR . 'admin/admin-init.php');
 	$w3_speedster_admin = new W3Speedster\w3speedster_admin();
 	$w3_speedster_admin->w3SpeedsterCachePurgeCallback();
 }
 
 function w3SpeedsterHtmlCachePurgeCallback(){
-	require_once(W3SPEEDSTER_PLUGIN_DIR . 'admin/class_admin.php');
+	require_once(W3SPEEDSTER_DIR . 'admin/admin-init.php');
 	$w3_speedster_admin = new W3Speedster\w3speedster_admin();
 	$w3_speedster_admin->w3SpeedsterHtmlCachePurgeCallback();
 }
 
 function w3SpeedsterCriticalCachePurgeCallback(){
-	require_once(W3SPEEDSTER_PLUGIN_DIR . 'admin/class_admin.php');
+	require_once(W3SPEEDSTER_DIR . 'admin/admin-init.php');
 	$w3_speedster_admin = new W3Speedster\w3speedster_admin();
 	$w3_speedster_admin->w3SpeedsterCriticalCachePurgeCallback();
 }
@@ -607,17 +623,17 @@ function addOptimizeImageCustomJs(){ ?>
 }
 
 function addButtonToEditMediaModalFieldsArea1($form_fields, $post){
-	require_once(W3SPEEDSTER_PLUGIN_DIR . 'admin/class_admin.php');
+	require_once(W3SPEEDSTER_DIR . 'admin/admin-init.php');
 	$w3_speedster_admin = new W3Speedster\w3speedster_admin();
 	return $w3_speedster_admin->addButtonToEditMediaModalFieldsArea1($form_fields, $post);
 }
 function fnW3OptimizeMediaImageCallback(){
-	require_once(W3SPEEDSTER_PLUGIN_DIR . 'admin/class_admin.php');
+	require_once(W3SPEEDSTER_DIR . 'admin/admin-init.php');
 	$w3_speedster_admin = new W3Speedster\w3speedster_admin();
 	$w3_speedster_admin->fnW3OptimizeMediaImageCallback();
 }
 function w3speedsterActivateLicenseKey(){
-	require_once(W3SPEEDSTER_PLUGIN_DIR . 'admin/class_admin.php');
+	require_once(W3SPEEDSTER_DIR . 'admin/admin-init.php');
 	$w3_speedster_admin = new W3Speedster\w3speedster_admin();
 	$w3_speedster_admin->w3speedsterActivateLicenseKey();
 }
@@ -636,7 +652,7 @@ function w3UpgradeFunction( $upgrader_object, $options ) {
     }
 }
 function w3LoadAdminCallback(){
-	add_action( 'admin_bar_menu', 'w3ToolbarLinkToDeleteCache' ,999 );
+	
 	if(function_exists('is_multisite') && is_multisite()){
 		add_action('network_admin_menu', 'w3SpeedsterRegisterNetworkOptionsPage' );
 	}
@@ -645,6 +661,7 @@ function w3LoadAdminCallback(){
 		add_action('admin_menu', 'w3SpeedsterRegisterSiteOptionsPage' );
 	}
 	//add_action( 'admin_footer', 'w3CachePurgeActionJs' );
+	add_action( 'admin_bar_menu', 'w3ToolbarLinkToDeleteCache' ,999 );
 	add_action( 'wp_ajax_w3_speedster_cache_purge', 'w3SpeedsterCachePurgeCallback' );
 	add_action( 'wp_ajax_w3_speedster_critical_cache_purge', 'w3SpeedsterCriticalCachePurgeCallback');
 	add_action( 'wp_ajax_w3_speedster_html_cache_purge', 'w3SpeedsterHtmlCachePurgeCallback' );
@@ -655,15 +672,20 @@ function w3LoadAdminCallback(){
 	add_action( 'wp_ajax_hookBeforeStartOptimization', 'hookBeforeStartOptimization' );
 	add_action('admin_enqueue_scripts', 'w3SpeedsterAdminEnqueScript');
 	if(!empty($_GET['page']) && $_GET['page'] == 'w3_speedster'){
-		require_once(W3SPEEDSTER_PLUGIN_DIR . 'admin/class_admin.php');
-		require_once(W3SPEEDSTER_PLUGIN_DIR . 'includes/class_image.php');	
-		$w3_speedster_admin = new W3Speedster\w3speedster_admin(); 
-		$w3_speedster_admin->launch(); 
+		launchAdmin();
 	}
 }
-
+function launchAdmin(){
+	global $w3admin;
+	if(empty($w3admin)){
+		require_once(W3SPEEDSTER_DIR . 'admin/admin-init.php');
+		$w3admin = new W3Speedster\w3speedster_admin(); 
+		$w3admin->launch();
+	}
+	return $w3admin;
+}
 function w3speedsterPreloadCacheCronJobCallback(){
-	require_once(W3SPEEDSTER_PLUGIN_DIR . 'includes/class_html_optimize.php');
+	require_once(W3SPEEDSTER_DIR . 'includes/html-optimize.php');
 	$w3speedsterinit = new w3speedster\w3speed_html_optimize();
 	$w3speedsterinit->w3speedsterSetPreloadCache();
 }
@@ -679,9 +701,9 @@ if(is_admin()){
 }else{
     if ( (defined('DOING_AJAX') && DOING_AJAX) || (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')) {
 	}else{
-		require_once(W3SPEEDSTER_PLUGIN_DIR . 'includes/class_minify_css.php');
-		require_once(W3SPEEDSTER_PLUGIN_DIR . 'includes/class_js_minify.php');
-		require_once(W3SPEEDSTER_PLUGIN_DIR . 'includes/class_html_optimize.php');
+		require_once(W3SPEEDSTER_DIR . 'includes/css-optimize.php');
+		require_once(W3SPEEDSTER_DIR . 'includes/js-optimize.php');
+		require_once(W3SPEEDSTER_DIR . 'includes/html-optimize.php');
 		add_action( 'admin_bar_menu', 'w3ToolbarLinkToDeleteCache' ,999 );
 		//add_action( 'wp_footer', 'w3CachePurgeActionJs' );
 		if(!empty($_GET['testing'])){
@@ -718,31 +740,31 @@ function w3Start(){
 if(is_admin()){
 	$upload_dir   = wp_upload_dir();
 	if(!is_file($upload_dir['basedir'].'/blank-h.png')){
-		copy(W3SPEEDSTER_PLUGIN_DIR."assets/images/blank-h.png",$upload_dir['basedir'].'/blank-h.png');
+		copy(W3SPEEDSTER_DIR."assets/images/blank-h.png",$upload_dir['basedir'].'/blank-h.png');
 	}
 	if(!is_file($upload_dir['basedir'].'/blank-square.png')){
-		copy(W3SPEEDSTER_PLUGIN_DIR."assets/images/blank-square.png",$upload_dir['basedir'].'/blank-square.png');
+		copy(W3SPEEDSTER_DIR."assets/images/blank-square.png",$upload_dir['basedir'].'/blank-square.png');
 	}
 	if(!is_file($upload_dir['basedir'].'/blank-p.png')){
-		copy(W3SPEEDSTER_PLUGIN_DIR."assets/images/blank-p.png",$upload_dir['basedir'].'/blank-p.png');
+		copy(W3SPEEDSTER_DIR."assets/images/blank-p.png",$upload_dir['basedir'].'/blank-p.png');
 	}
 	if(!is_file($upload_dir['basedir'].'/blank-3x4.png')){
-		copy(W3SPEEDSTER_PLUGIN_DIR."assets/images/blank-3x4.png",$upload_dir['basedir'].'/blank-3x4.png');
+		copy(W3SPEEDSTER_DIR."assets/images/blank-3x4.png",$upload_dir['basedir'].'/blank-3x4.png');
 	}
 	if(!is_file($upload_dir['basedir'].'/blank-4x3.png')){
-		copy(W3SPEEDSTER_PLUGIN_DIR."assets/images/blank-4x3.png",$upload_dir['basedir'].'/blank-4x3.png');
+		copy(W3SPEEDSTER_DIR."assets/images/blank-4x3.png",$upload_dir['basedir'].'/blank-4x3.png');
 	}
 	if(!is_file($upload_dir['basedir'].'/blank.png')){
-		copy(W3SPEEDSTER_PLUGIN_DIR."assets/images/blank.png",$upload_dir['basedir'].'/blank.png');
+		copy(W3SPEEDSTER_DIR."assets/images/blank.png",$upload_dir['basedir'].'/blank.png');
 	}
 	if(!is_file($upload_dir['basedir'].'/blank.mp4')){
-		copy(W3SPEEDSTER_PLUGIN_DIR."assets/images/blank.mp4",$upload_dir['basedir'].'/blank.mp4');
+		copy(W3SPEEDSTER_DIR."assets/images/blank.mp4",$upload_dir['basedir'].'/blank.mp4');
 	}
 	if(!is_file($upload_dir['basedir'].'/blank.mp3')){
-		copy(W3SPEEDSTER_PLUGIN_DIR."assets/images/blank.mp3",$upload_dir['basedir'].'/blank.mp3');
+		copy(W3SPEEDSTER_DIR."assets/images/blank.mp3",$upload_dir['basedir'].'/blank.mp3');
 	}
 	if(!is_file($upload_dir['basedir'].'/blank.pngw3.webp')){
-		copy(W3SPEEDSTER_PLUGIN_DIR."assets/images/blank.pngw3.webp",$upload_dir['basedir'].'/blank.pngw3.webp');
+		copy(W3SPEEDSTER_DIR."assets/images/blank.pngw3.webp",$upload_dir['basedir'].'/blank.pngw3.webp');
 	}
 }
 add_action('in_plugin_update_message-w3speedster/w3speedster.php','w3speedsterPluginUpdateMessage');
@@ -753,42 +775,42 @@ function w3speedsterPluginUpdateMessage(){
 
 function hookBeforeStartOptimization() {
 	if ( isset($_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'],'hook_callback') ) {
-	$data = json_decode(stripslashes($_POST['script']));
-	foreach ($data as $singleHook) {
-		$num = 3;
-		register_shutdown_function(function () use ($data,$num) {
-			$error = error_get_last();
+		$data = json_decode(stripslashes($_POST['script']));
+		foreach ($data as $singleHook) {
+			$num = 3;
+			register_shutdown_function(function () use ($data,$num) {
+				$error = error_get_last();
 
-			if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
-				// Handle the fatal error
-				$responseData = array(
-					'error' => "Fatal error occurred: {$error['message']}",
-					'additional_data' => $data[$num]->hookKey
-				);
-				echo wp_json_encode($responseData);
+				if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+					// Handle the fatal error
+					$responseData = array(
+						'error' => "Fatal error occurred: {$error['message']}",
+						'additional_data' => $data[$num]->hookKey
+					);
+					echo wp_json_encode($responseData);
+					exit;
+				}
+				
+			});
+
+			$script = !empty($singleHook->value) ? $singleHook->value : '';
+			try {
+				$test = 1;
+				// @codingStandardsIgnoreLine
+				eval("$script");
+			} catch (ParseError $p) {
+				// Handle parse error
+				$parseErrorData = array($singleHook->hookKey, ['error' => "Parse error occurred: {$p->getMessage()}"]);
+				echo wp_json_encode($parseErrorData);
+				exit;
+			} catch (Exception $e) {
+				// Handle other exceptions
+				$exceptionError = array($singleHook->hookKey, ['error' => $e->getMessage()]);
+				echo wp_json_encode($exceptionError);
 				exit;
 			}
 			
-		});
-
-		$script = !empty($singleHook->value) ? $singleHook->value : '';
-		try {
-			$test = 1;
-			// @codingStandardsIgnoreLine
-			eval("$script");
-		} catch (ParseError $p) {
-			// Handle parse error
-			$parseErrorData = array($singleHook->hookKey, ['error' => "Parse error occurred: {$p->getMessage()}"]);
-			echo wp_json_encode($parseErrorData);
-			exit;
-		} catch (Exception $e) {
-			// Handle other exceptions
-			$exceptionError = array($singleHook->hookKey, ['error' => $e->getMessage()]);
-			echo wp_json_encode($exceptionError);
-			exit;
 		}
-		
-	}
 	exit;
 	}
 }
@@ -848,7 +870,7 @@ $data = array(
 );
 
 $wpdb->insert($table_name, $data);
-wp_die();
+exit;
 }
 
 add_action( 'wp_ajax_nopriv_w3SpeedsterGetLogData', 'w3SpeedsterGetLogData' );
@@ -926,7 +948,7 @@ function w3SpeedsterGetLogData(){
 	if(isset($_POST['getBy'])){
 		// @codingStandardsIgnoreLine
 		echo $logData;
-		wp_die();
+		exit;
 	}else{
 		return $logData;
 	}
@@ -983,7 +1005,7 @@ function w3SpeedsterDeleteLogData(){
     }
 
     // Important: Always exit after processing to prevent further execution
-    wp_die();
+    exit;
 }
 
 add_action( 'wp_ajax_nopriv_w3SpeddsterShowUrlSuggestions', 'w3SpeddsterShowUrlSuggestions' );
@@ -1021,7 +1043,7 @@ $results = $wpdb->get_results(
     'optionsWithCheckbox' => $optionsWithCheckbox
 	);
 	echo wp_json_encode($urlArray);
-	wp_die();
+	exit;
 }
 
 function w3SpeedsterAdminEnqueScript(){

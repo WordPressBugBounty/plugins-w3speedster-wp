@@ -1,4 +1,4 @@
-const w3IsMobile= window.innerWidth<768?1:0, rootMargin = '0px 0px '+w3_lazy_load_by_px+'px 0px',windowHeight = window.innerHeight;
+const w3IsMobile= window.innerWidth<768?1:0, rootMargin = '0px 0px '+w3LazyloadByPx+'px 0px',windowHeight = window.innerHeight;
 function w3ToWebp(elementImg) {
 	for (var ig = 0; ig < elementImg.length; ig++) {
 		if (elementImg[ig].getAttribute("data-src") != null && elementImg[ig].getAttribute("data-src") != "") {
@@ -66,17 +66,17 @@ img.onerror = function() {
 	fixWebp();
 }
 ;
-img.src = blank_image_webp_url;
-function w3_events_on_end_js() {
+img.src = blankImageWebpUrl;
+function w3EventsOnEndJs() {
 	if(!document.getElementsByTagName('html')[0].classList.contains('jsload')){
-		setTimeout(w3_events_on_end_js,100);
+		setTimeout(w3EventsOnEndJs,100);
 		return;
 	}
 	w3Bglazyload = 0;
 	const lazyImages = [].slice.call(document.querySelectorAll("img[data-class='LazyLoad']"));
 	w3LazyLoadResource(lazyImages, 'img');
 	setTimeout(function(){
-		const bgImg = [].slice.call(document.querySelectorAll("div[data-w3BgLazy='1'], section[data-w3BgLazy='1']"));
+		const bgImg = [].slice.call(document.querySelectorAll("div[data-BgLz='1'], section[data-BgLz='1']"));
 		w3LazyLoadResource(bgImg, 'bgImg');
 	},1000);
 }
@@ -87,9 +87,9 @@ function w3LazyLoadResource(lazyResources, resource) {
 		lazyObserver[resource] = new IntersectionObserver(function(entries, observer) {
 			entries.forEach(function(entry) {
 				const w3BodyRect = document.body.getBoundingClientRect();
-				if (entry.isIntersecting || ((w3BodyRect.top != 0 || window.w3Html['class'].indexOf('w3_start') != -1) && (entry.boundingClientRect.top - windowHeight + w3BodyRect.top) < w3_lazy_load_by_px)) {
+				if (entry.isIntersecting || ((w3BodyRect.top != 0 || window.w3Html['class'].indexOf('w3_start') != -1) && (entry.boundingClientRect.top - windowHeight + w3BodyRect.top) < w3LazyloadByPx)) {
 					const compStyles = window.getComputedStyle(entry.target);
-					if (compStyles.getPropertyValue("opacity") != 0) {
+					if (compStyles.getPropertyValue("opacity") != 0 || window.w3Html['class'].indexOf('w3_start') != -1) {
 						w3LoadResource[resource](entry);
 					}
 				}
@@ -102,7 +102,7 @@ function w3LazyLoadResource(lazyResources, resource) {
 		lazyResources.forEach(function(elem) {
 			if(elem.tagName == 'IMG' || elem.tagName == 'PICTURE')
 				elem.removeAttribute('data-class');
-			elem.setAttribute("data-w3BgLazy",1);
+			//elem.setAttribute("data-w3BgLazy",1);
 			lazyObserver[resource].observe(elem);
 		});
 	} else {
@@ -133,7 +133,7 @@ w3LoadResource['rliframe'] = function(lazyResource) {
 }
 w3LoadResource['bgImg'] = function(entry) {
 	let lazyBg = entry.target;
-	lazyBg.removeAttribute("data-w3BgLazy");
+	lazyBg.removeAttribute("data-BgLz");
 	lazyObserver['bgImg'].unobserve(lazyBg);
 }
 w3LoadResource['rlbgImg'] = function(lazyResource) {
@@ -176,7 +176,7 @@ w3LoadResource['rlimg'] = function(lazyResource) {
 	lazyResource.srcset = lazyResource.dataset.srcset ? lazyResource.dataset.srcset : lazyResource.srcset;
 	delete lazyResource.dataset.class;
 }
-function w3_events_on_start_js() {
+function w3EventsOnStartJs() {
 	var lazyvideos = document.getElementsByTagName("videolazy");
 	convertToVideoTag(lazyvideos);
 	loadVideos();
@@ -205,6 +205,9 @@ function convertToIframes(lazyIframes) {
 	w3LazyLoadResource(lazyIframes, 'iframe');
 }
 startLazyLoad();
+if(typeof(w3BeforeLoad) == "function"){
+	w3BeforeLoad();
+}
 setInterval(function(){
 	startImgLazyLoad();
 },1000);
@@ -216,7 +219,7 @@ function startImgLazyLoad(){
 }
 function startLazyLoad(){
 	startImgLazyLoad();
-	var lazyBgs = document.querySelectorAll("div, section, iframelazy, iframe[data-class='LazyLoad']");
+	var lazyBgs = document.querySelectorAll("div[data-BgLz='1'], section[data-BgLz='1'], iframelazy[data-BgLz='1'], iframe[data-BgLz='1']");
 	w3LazyLoadResource(lazyBgs, 'bgImg');
 	w3LoadResource['rlbgImg']();
 }
@@ -250,6 +253,9 @@ function lazyloadVideoSource(source) {
 			if (source.getAttribute("autoplay") !== null) {
 				source.play();
 			}
+		}
+		if(typeof (source.parentNode.src) == "string"){
+			source.parentNode.src = source.src;
 		}
 	} else {
 		source.parentNode.src = src;
