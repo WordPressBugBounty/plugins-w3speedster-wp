@@ -1,8 +1,6 @@
 <?php
 namespace W3speedster;
-if ( ! defined( 'ABSPATH' ) ) {
-    exit;
-}
+checkDirectCall();
 
 class w3speedster_js extends w3speedster_css{
 
@@ -45,41 +43,9 @@ class w3speedster_js extends w3speedster_css{
 		}
 		return $string;
 	}
-	function w3CreateFileCacheJsUrl($path){
-		$file_name = w3GetOption('w3_rand_key');
-        $cache_file_path = $this->w3GetCachePath('js').'/'.$file_name.'/'.ltrim($path,'/');
-	    //$cache_file_path = $this->w3GetCachePath('js').'/'.md5($this->add_settings['w3_rand_key'].$path).'.js';
-        if( !file_exists($cache_file_path) ){
-			$path1 = explode('/',$path);
-			array_pop($path1);
-			$path1 = implode('/',$path1);
-            $this->w3CheckIfFolderExists($this->w3GetCachePath('js'.'/'.$file_name.'/'.ltrim($path1,'/')));
-            //$this->w3CheckIfFolderExists($this->w3GetCachePath('js'));
-			$string = $this->w3speedsterGetContents($path);
-            $string = $this->w3ModifyFileCacheJs($string, $path);
-            $this->w3CreateFile($cache_file_path, $string );
-        }
-		if(!file_exists($cache_file_path)){
-			return $path;
-		}else{
-			return str_replace($this->add_settings['document_root'],'',$cache_file_path);
-		}
-	}
+	
 	function w3_changes_in_js($string,$path=''){
-		//$string = preg_replace('/"(\s*)use strict(\s*)"(\s*);/', '', $string, 1);
 		$string = str_replace('document.readyState','document.w3readyState',$string);
-		$string = preg_replace('/([\s\;\:\}\,\)\(\{])([a-zA-Z]+)([.]addEventListener\s*\(\s*[\'|"]\s*DOMContentLoaded\s*[\'|"]\s*,)/', "$1$2.addEventListener('w3-DOMContentLoaded',", $string);
-		$string = preg_replace('/([\s\;\:\}\,\)\(\{])([a-zA-Z]+)([.]addEventListener\s*\(\s*[\'|"]\s*load\s*[\'|"]\s*,)/', "$1$2.addEventListener('w3-load',", $string);
-		if(strpos($string,'DOMContentLoaded') === false){
-			$string = preg_replace('/(jQuery|\$)\(\s?function\s?\(\s?((?!jQuery)[\S|\$]{1,6})\s?\)\s?{/', 'jQuery(document).on(\'w3-DOMContentLoad\',function(){const $2=jQuery;', $string);
-			$string = preg_replace('/(jQuery|\$)\(\s?function\s?\(\s?(jQuery|[\s]{0,4})\s?\)\s?{/', 'jQuery(document).on(\'w3-DOMContentLoad\',function(){', $string);
-			$string = preg_replace('/(jQuery|\$)(\s?\(\s?)([\(\s]?\(\s?\(\s?\)=>)/', 'document.addEventListener(\'w3-DOMContentLoaded\',$3', $string);
-			$string = preg_replace('/\s{1}(\S{1,6})\(document\)\s?\.on\s?\([\'|\"]\s?ready\s?[\'|\"]\s?,(\s?function\s?\(\s?((?!jQuery)[\S|\$]{1,6})\s?\)\s?{)/', ' jQuery(document).on(\'w3-DOMContentLoad\',function(){const $3=jQuery;', $string);
-			$string = preg_replace('/(jQuery|\$)(\s?\(\s?document\)\s?)\.ready\(function\s?\((\s?(?!jQuery)[\S|\$]{1,6})\s?\)\s?{/', 'jQuery(document).on(\'w3-DOMContentLoad\',function(){const $3=jQuery;', $string);
-			$string = preg_replace('/(jQuery|\$)(\s?\(\s?document\)\s?)\.ready\(function\s?\((\s?(jQuery|[\s]{0,4}))\s?\)\s?{/', 'jQuery(document).on(\'w3-DOMContentLoad\',function(){', $string);
-		}
-		$string = preg_replace('/(\(document\)\s*\.on\s*\([\'|\"]\s*)load(\s*[\'|\"]\s*,\s*\(?function\s*\(\s*\S*\s*\))/', "$1w3-load$2", $string);
-		$string = preg_replace('/(\(window\)\s*\.on\s*\([\'|\"]\s*)load(\s*[\'|\"]\s*,\s*\(?function\s*\(\s*\S*\s*\))/', "$1w3-load$2", $string);
 		if(!empty($this->settings['enable_inp']) && (!function_exists('w3NoChangesForInp') || (function_exists('w3NoChangesForInp') && !w3NoChangesForInp($string, $path)))){
 			$string = preg_replace('/(\.on\s*\(\s*)[\'|\"]\s*click\s*[\'|\"](\s*\,\s*)/', '$1w3elem$2', $string);
 			$string = preg_replace('/(\.)click\s*\((\s*function)/', '$1on(w3elem,$2', $string);
@@ -88,7 +54,7 @@ class w3speedster_js extends w3speedster_css{
 		return $string;
 	}
     function w3CreateFileCacheJs($path){
-		$file_name = w3GetOption('w3_rand_key');
+		$file_name = $this->w3GetOption('w3_rand_key');
         $cache_file_path = $this->w3GetCachePath('js').'/'.$file_name.'/'.ltrim($path,'/');
 	    //$cache_file_path = $this->w3GetCachePath('js').'/'.md5($this->add_settings['w3_rand_key'].$path).'.js';
         if( !file_exists($cache_file_path) ){
@@ -203,20 +169,19 @@ class w3speedster_js extends w3speedster_css{
 					if(strpos($url_array['path'],'./') !== false || strpos($url_array['path'],'../') !== false){
                     	$url_array['path'] = $this->removeDotPathSegments($url_array['path']);
                     }
+					
 					if(!$this->w3IsExternal($script_obj['src']) && $this->w3Endswith($url_array['path'], '.js') && $exclude_js != 1 && $exclude_js != 3){
                         $old_path = $url_array['path'];
-                        if(file_exists($this->add_settings['document_root'].$url_array['path'])){
+						if(file_exists($this->add_settings['document_root'].$url_array['path'])){
 							$url_array['path'] = $this->w3CreateFileCacheJs($url_array['path']);
-						}else{
-							$url_array['path'] = $this->w3CreateFileCacheJsUrl($script_obj['src']);
+							$script_obj['src'] = $this->add_settings['site_url'].$url_array['path'];
 						}
-                        $script_obj['src'] = $this->add_settings['site_url'].$url_array['path'];
-                    }
+					}
 					if($exclude_js){
                         if( $exclude_js == 3 || $exclude_js == 1){
 							$script_obj['src'] = $enable_cdn && $enable_cdn_path ? str_replace($this->add_settings['site_url'],$this->add_settings['image_home_url'] ,$script_obj['src']) : $script_obj['src'];
 							$this->add_settings['preload_resources']['all'][] = $script_obj['src'];
-							$this->w3StrReplaceSet($script,$this->w3ImplodeLinkArray('script',$script_obj));
+							$this->w3StrReplaceSetJs($script,$this->w3ImplodeLinkArray('script',$script_obj));
 							continue;
 						}
 						if( $exclude_js == 2){
@@ -226,7 +191,7 @@ class w3speedster_js extends w3speedster_css{
 							$this->add_settings['jquery_excluded'] = $this->add_settings['document_root'].$url_array['path'];
 						}
 						$script_obj['src'] = $enable_cdn && $enable_cdn_path ? str_replace($this->add_settings['site_url'],$this->add_settings['image_home_url'] ,$script_obj['src']) : $script_obj['src'];
-						$this->w3StrReplaceSet($script,$this->w3ImplodeLinkArray('script',$script_obj));
+						$this->w3StrReplaceSetJs($script,$this->w3ImplodeLinkArray('script',$script_obj));
                         continue;
                     }
                     $exclude_js_bool=0;
@@ -246,13 +211,13 @@ class w3speedster_js extends w3speedster_css{
 						}
 						$script_obj['type'] = 'lazyJs';
 						$script_obj['src'] = $enable_cdn && $enable_cdn_path ? str_replace($this->add_settings['site_url'],$this->add_settings['image_home_url'] ,$this->add_settings['site_url'].$url_array['path']) : $this->add_settings['site_url'].$url_array['path'];
-						$this->w3StrReplaceSet($script,$this->w3ImplodeLinkArray('script',$script_obj));
+						$this->w3StrReplaceSetJs($script,$this->w3ImplodeLinkArray('script',$script_obj));
 					}elseif($this->w3IsExternal($val) && empty($exclude_js_bool) ){
 						if(!empty($script_obj['type']) && $script_obj['type'] != 'text/javascript'){
 							$script_obj['data-w3-type']= $script_obj['type'];
 						}
 						$script_obj['type'] = 'lazyJs';
-						$this->w3StrReplaceSet($script,$this->w3ImplodeLinkArray('script',$script_obj));
+						$this->w3StrReplaceSetJs($script,$this->w3ImplodeLinkArray('script',$script_obj));
 					}elseif($exclude_js_bool){
 						if(!empty($script_obj['type']) && $script_obj['type'] != 'text/javascript'){
 							$script_obj['data-w3-type']= $script_obj['type'];
@@ -267,7 +232,7 @@ class w3speedster_js extends w3speedster_css{
 							$code = str_replace(array('$script_obj','$script'),array('$args[0]','$args[1]'),$this->settings['hook_external_javascript_customize']);
 							$script_obj = $this->hookCallbackFunction($code,$script_obj, $script);
 						}
-						$this->w3StrReplaceSet($script,$this->w3ImplodeLinkArray('script',$script_obj));
+						$this->w3StrReplaceSetJs($script,$this->w3ImplodeLinkArray('script',$script_obj));
                     }
                 }else{
                     
@@ -285,7 +250,7 @@ class w3speedster_js extends w3speedster_css{
 						$script_text = $this->hookCallbackFunction($code,$script_text);
 					}
 					if($tag = $this->loadScriptTagInUrl($script_text,$si)){
-						$this->w3StrReplaceSet($script,$tag);
+						$this->w3StrReplaceSetJs($script,$tag);
 						continue;
 					}
 					if(!empty($force_innerjs_to_lazy_load)){
@@ -300,9 +265,9 @@ class w3speedster_js extends w3speedster_css{
                     if(!empty($exclude_js_bool) && $exclude_js_bool != 2){
 						$script_text = $this->unlazyLoadBackgroundImageJavascript($script_text);
 						if(function_exists('w3speedup_inner_js_customize')){
-							$this->w3StrReplaceSet($script,'<script>'.$script_text.'</script>');
+							$this->w3StrReplaceSetJs($script,'<script>'.$script_text.'</script>');
 						}
-						$this->w3StrReplaceSet($script,'<script>'.$script_text.'</script>');
+						$this->w3StrReplaceSetJs($script,'<script>'.$script_text.'</script>');
 					}else{
 						if(!empty($script_obj['type']) && $script_obj['type'] != 'text/javascript'){
 							$script_obj['data-w3-type']= $script_obj['type'];
@@ -325,7 +290,7 @@ class w3speedster_js extends w3speedster_css{
 						$script_text = $this->unlazyLoadBackgroundImageJavascript($script_text);
 						$script_modified = $script_modified.'>'.$script_text.'</script>';
 						
-						$this->w3StrReplaceSet($script,$script_modified);
+						$this->w3StrReplaceSetJs($script,$script_modified);
 						
 						
 					}
@@ -347,7 +312,7 @@ class w3speedster_js extends w3speedster_css{
 					$custom_js_url = $this->w3GetCacheUrl('all-js').'/wnw-custom-js.js';
 					$custom_js_url = $enable_cdn && $enable_cdn_path ? str_replace($this->add_settings['site_url'],$this->add_settings['image_home_url'] ,$custom_js_url) : $custom_js_url;
 					$position = strrpos($this->html,'</body>');
-					$rand = wp_rand(10,1000);
+					$rand = random_int(100,1000);
 					$this->html = substr_replace( $this->html, '<script '.(!empty($this->settings['custom_javascript_defer']) ? 'defer="defer"' : '').' id="wnw-custom-js" src="'.$custom_js_url.'?ver='.$rand.'"></script>', $position, 0 );
 				}else{
 					$position = strrpos($this->html,'</body>');
@@ -394,9 +359,9 @@ class w3speedster_js extends w3speedster_css{
 			$lazy_load_js = !empty($this->settings['load_combined_js']) && $this->settings['load_combined_js'] == 'after_page_load' ? 1 : 0;
 			for($ii = 0; $ii < count($final_merge_has_js); $ii++){
 				if($ii == count($final_merge_has_js) -1 ){
-					$this->w3StrReplaceSet($final_merge_has_js[$ii],'<script type="lazyJs" src="'.$cache_js_url.'"></script>');
+					$this->w3StrReplaceSetJs($final_merge_has_js[$ii],'<script type="lazyJs" src="'.$cache_js_url.'"></script>');
 				}else{
-					$this->w3StrReplaceSet($final_merge_has_js[$ii],'');
+					$this->w3StrReplaceSetJs($final_merge_has_js[$ii],'');
 				}
 			}
 		}
@@ -425,7 +390,7 @@ class w3speedster_js extends w3speedster_css{
 		}
 		$exclude_cdn_arr = !empty($this->add_settings['exclude_cdn']) ? $this->add_settings['exclude_cdn'] : array();
 		$lazy_load_by_px = !empty($this->settings['lazy_load_px']) ? (int)$this->settings['lazy_load_px'] : 200;
-        $script = 'var w3elem;setTimeout(function(){w3elem = window.innerWidth<768?\'touchstart\':\'click\';});var w3LazyloadByPx='.$lazy_load_by_px.', blankImageWebpUrl = "'. (($enable_cdn && !in_array('.png',$exclude_cdn_arr)) ? str_replace($this->add_settings['site_url'],$this->add_settings['image_home_url'],$this->add_settings['upload_base_url']): $this->add_settings['upload_base_url']).'/blank.pngw3.webp", w3UploadPath="'.$this->add_settings['upload_path'].'", w3WebpPath="'.$this->add_settings['webp_path'].'", w3LazyloadJs = '.(!empty($this->settings['load_combined_js']) && $this->settings['load_combined_js'] == 'after_page_load' ? 1 : 0).', w3JsIsExcluded = '.(!empty($this->settings['js_is_excluded']) ? 1 : 0).', w3Inp = '.(!empty($this->settings['enable_inp']) ? 1 : 0).',';
+        $script = 'var w3elem = window.innerWidth<768?\'touchstart\':\'click\';var w3LazyloadByPx='.$lazy_load_by_px.', blankImageWebpUrl = "'. (($enable_cdn && !in_array('.png',$exclude_cdn_arr)) ? str_replace($this->add_settings['site_url'],$this->add_settings['image_home_url'],$this->add_settings['upload_base_url']): $this->add_settings['upload_base_url']).'/blank.pngw3.webp", w3UploadPath="'.$this->add_settings['upload_path'].'", w3WebpPath="'.$this->add_settings['webp_path'].'", w3LazyloadJs = '.(!empty($this->settings['load_combined_js']) && $this->settings['load_combined_js'] == 'after_page_load' ? 1 : 0).', w3JsIsExcluded = '.(!empty($this->settings['js_is_excluded']) ? 1 : 0).', w3Inp = '.(!empty($this->settings['enable_inp']) ? 1 : 0).',';
 		if((!empty($this->settings['exclude_page_from_load_combined_js']) && $this->w3CheckIfPageExcluded($this->settings['exclude_page_from_load_combined_js'])) || empty($this->settings['js']) ){
 			$script.='w3ExcludedJs=1;';
         }else{
@@ -445,7 +410,7 @@ class w3speedster_js extends w3speedster_css{
 	function loadScriptTagInUrl($script_tag,$i){
 		$load_script_tag_in_url= !empty($this->settings['load_script_tag_in_url']) ? explode("\r\n", $this->settings['load_script_tag_in_url']) : array();
 		$scriptContentFile = array();
-		$file_name = w3GetOption('w3_rand_key').$i;
+		$file_name = $this->w3GetOption('w3_rand_key').$i;
 		foreach($load_script_tag_in_url as $ex_script){
 			if(!empty($ex_script) && !empty($script_tag) && strpos($script_tag, $ex_script) !== false){
 				$file_name .= $ex_script;

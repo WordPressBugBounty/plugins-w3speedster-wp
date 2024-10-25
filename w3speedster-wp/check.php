@@ -11,10 +11,12 @@ if(!empty($url) && !empty($path)){
 	$key = w3ScanDir($cachePath.$match[2]);
 	$newPath = $cachePath.$match[2].'/'.$key.$match[4].'.'.$match[5];
 	if(file_exists($newPath)){
+		header("HTTP/1.1 200 OK");
 		// @codingStandardsIgnoreLine
 		echo file_get_contents($newPath);
 		exit;
 	}elseif(file_exists($rootPath.$match[4].'.'.$match[5])){
+		header("HTTP/1.1 200 OK");
 		// @codingStandardsIgnoreLine
 		echo file_get_contents($rootPath.$match[4].'.'.$match[5]);
 		exit;

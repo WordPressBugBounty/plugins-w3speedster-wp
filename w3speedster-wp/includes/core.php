@@ -1,9 +1,7 @@
 <?php
 namespace W3speedster;
 
-if (!defined('ABSPATH')) {
-    exit;
-}
+checkDirectCall();
 
 class w3core{
 	var $add_settings;
@@ -114,7 +112,7 @@ class w3core{
         if (!empty($this->add_settings['wp_get']['url'])) {
             $key_url = $this->add_settings['wp_get']['url'];
         }
-        $preload_css_new = $preload_css = w3GetOption('w3speedup_preload_css');
+        $preload_css_new = $preload_css = $this->w3GetOption('w3speedup_preload_css');
 		if (!empty($preload_css) && is_array($preload_css) && count($preload_css) > 0) {
             foreach ($preload_css as $key1 => $url) {
                 if (strpos($key1, home_url()) !== false) {
@@ -157,7 +155,7 @@ class w3core{
             }
             w3UpdateOption('w3speedup_preload_css', $preload_css_new, 'no');
 			return $response;
-        }elseif(!empty($_REQUEST['page']) && $_REQUEST['page'] == 'admin' && empty(w3GetOption('w3speedup_preload_css_total'))){
+        }elseif(!empty($_REQUEST['page']) && $_REQUEST['page'] == 'admin' && empty($this->w3GetOption('w3speedup_preload_css_total'))){
 			$this->browsePost();
 		}
     }
@@ -189,14 +187,25 @@ class w3core{
             $this->w3Echo('rocket9');
             return 'exists';
         }
-        $nonce = wp_create_nonce("purge_critical_css");
-        w3UpdateOption('purge_critical_css', $nonce);
+        $nonce = $this->createSecureKey('purge_critical_css');
         if ($this->add_settings['enable_cdn']) {
             $css_urls = $this->add_settings['home_url'] . ',' . $this->add_settings['image_home_url'];
         } else {
             $css_urls = $this->add_settings['home_url'];
         }
 		list($preload_total,$preload_created) = $this->w3CriticalCssDetails();
+		$responseCssPath = $this->add_settings['critical_css_path'].'/responses';
+		$this->w3CheckIfFolderExists($responseCssPath);
+		$responseCssFile = $responseCssPath.'/'.base64_encode($url).'.json';
+		if(file_exists($responseCssFile)){
+			$content = file_get_contents($responseCssFile);
+			$contentJson = (array)json_decode($content);
+			if(!empty($contentJson['url']) && !empty($contentJson['w3_css']) && !empty($contentJson['_wpnonce']) && $this->checkSecurityKey('purge_critical_css',$contentJson['_wpnonce'])){
+				$this->saveCriticalCss($contentJson['w3_css'],$url,$css_path,$filename);
+			}
+			unlink($responseCssFile);
+			return 'exists';
+		}
         $options = array(
                 'url' => $url,
                 'key' => $this->settings['main_license_key'],
@@ -204,6 +213,8 @@ class w3core{
                 'filename' => $filename,
                 'css_url' => $css_urls,
                 'path' => $css_path,
+				'response_url'=> W3SPEEDSTER_URL.'includes/css-response.php',
+				'response_path'=> $responseCssPath,
 				'auto' => ($preload_created ? $preload_created : 1)
 				);
         
@@ -217,24 +228,8 @@ class w3core{
         if (!empty($response)) {
             $this->w3Echo('rocket3' . $css_path . '/' . $filename);
             $response_arr = (array) json_decode($response);
-            if (!empty($response_arr['result']) && $response_arr['result'] == 'success') {
-				if(function_exists('w3speedup_customize_critical_css')){
-					$response_arr['w3_css'] = w3speedup_customize_critical_css($response_arr['w3_css']);
-				}
-				if(!empty($this->settings['hook_customize_critical_css'])){
-					$code = str_replace(array('$critical_css'),array('$args[0]'),$this->settings['hook_customize_critical_css']);
-					$response_arr['w3_css'] = $this->hookCallbackFunction($code,$response_arr['w3_css']);
-				}
-                $this->w3CreateFile($css_path . '/' . $filename, $response_arr['w3_css']);
-                $preload_css = w3GetOption('w3speedup_preload_css');
-                unset($preload_css[base64_encode($response_arr['url'])]);
-                //w3UpdateOption('w3speedup_preload_css', $preload_css, 'no');
-                //w3UpdateOption('w3speedup_preload_css_created', (int) w3GetOption('w3speedup_preload_css_created') + 1, 'no');
-                if (file_exists($file = $this->w3GetFullUrlCachePath($url) . '/main_css.json')) {
-                    wp_delete_file($file);
-                }
-                $this->w3DeleteHtmlCacheAfterPreloadCss($url);
-                return true;
+            if (!empty($response_arr['result']) && $response_arr['result'] == 'success' && !empty($response_arr['w3_css'])){
+				$this->saveCriticalCss($response_arr['w3_css'],$url,$css_path,$filename);
             } elseif (!empty($response_arr['error'])) {
                 if ($response_arr['error'] == 'process already running') {
                     return 'hold';
@@ -251,24 +246,54 @@ class w3core{
             return false;
         }
     }
+	function saveCriticalCss($w3Css,$url,$css_path,$filename){
+		if(function_exists('w3speedup_customize_critical_css')){
+			$w3Css = w3speedup_customize_critical_css($w3Css);
+		}
+		if(!empty($this->settings['hook_customize_critical_css'])){
+			$code = str_replace(array('$critical_css'),array('$args[0]'),$this->settings['hook_customize_critical_css']);
+			$w3Css = $this->hookCallbackFunction($code,$w3Css);
+		}
+		$this->w3CreateFile($css_path . '/' . $filename, $w3Css);
+		$preload_css = $this->w3GetOption('w3speedup_preload_css');
+		unset($preload_css[base64_encode($response_arr['url'])]);
+		$file = $this->w3GetFullUrlCachePath($url) . '/main_css.json';
+		if (file_exists($file)) {
+			wp_delete_file($file);
+		}
+		$this->w3DeleteHtmlCacheAfterPreloadCss($url);
+		return true;
+	}
 	function w3PutPreloadCss()
     {
-        if (!isset($this->add_settings['wp_get']['_wpnonce']) || $this->add_settings['wp_get']['_wpnonce'] != w3GetOption('purge_critical_css')) {
+        if (!isset($_POST['_wpnonce']) || $_POST['_wpnonce'] != $this->w3GetOption('purge_critical_css')) {
             echo 'Request not valid';
             exit;
         }
-        if (!empty($this->add_settings['wp_get']['url']) && !empty($this->add_settings['wp_get']['filename']) && !empty($this->add_settings['wp_get']['w3_css'])) {
-            $url = $this->add_settings['wp_get']['url'];
-            $preload_css = w3GetOption('w3speedup_preload_css');
-            echo $path = !empty($preload_css[$this->add_settings['wp_get']['filename']][2]) ? esc_html($preload_css[$this->add_settings['wp_get']['filename']][2]) : esc_html($this->add_settings['wp_get']['path']);
-            $this->w3CreateFile($path . '/' . $this->add_settings['wp_get']['filename'], stripslashes($this->add_settings['wp_get']['w3_css']));
-            unset($preload_css[base64_encode($this->add_settings['wp_get']['url'])]);
-            w3UpdateOption('w3speedup_preload_css', $preload_css, 'no');
-            if (file_exists($file = $this->w3GetFullUrlCachePath($url) . '/main_css.json')) {
-                $this->w3DeleteFile($file);
+        if (!empty($_POST['url']) && !empty($_POST['filename']) && !empty($_POST['w3_css'])) {
+             if (!empty($_POST['result']) && $_POST['result'] == 'success') {
+				$url = $_POST['url'];
+				$w3Css = $_POST['w3_css'];
+				$path = $_POST['path'];
+				$filename = $_POST['filename'];
+				if(function_exists('w3speedup_customize_critical_css')){
+					$w3Css = w3speedup_customize_critical_css($w3Css);
+				}
+				if(!empty($this->settings['hook_customize_critical_css'])){
+					$code = str_replace(array('$critical_css'),array('$args[0]'),$this->settings['hook_customize_critical_css']);
+					$w3Css = $this->hookCallbackFunction($code,$w3Css);
+				}
+                $this->w3CreateFile($path . '/' . $filename, $w3Css);
+                $preload_css = $this->w3GetOption('w3speedup_preload_css');
+                unset($preload_css[base64_encode($url)]);
+				$file = $this->w3GetFullUrlCachePath($url) . '/main_css.json';
+                if (file_exists($file)) {
+                    wp_delete_file($file);
+                }
+                $this->w3DeleteHtmlCacheAfterPreloadCss($url);
+                echo 'saved';
+				exit;
             }
-            $this->w3DeleteHtmlCacheAfterPreloadCss($url);
-            echo 'saved';
         }
         echo false;
         exit;
@@ -400,21 +425,19 @@ class w3core{
 	function insertString($originalString, $stringToInsert, $position) {
 		return substr($originalString, 0, $position) . $stringToInsert . substr($originalString, $position);
 	}
-    function w3StrReplaceSet($str, $rep)
-    {
-        global $str_replace_str_array, $str_replace_rep_array;
-        $str_replace_str_array[] = $str;
-        $str_replace_rep_array[] = $rep;
-        //echo '<pre>'; print_r($this->str_replace_str_array);
-    }
-
+    
     function w3StrReplaceSetImg($str, $rep)
     {
         global $str_replace_str_img, $str_replace_rep_img;
         $str_replace_str_img[] = $str;
         $str_replace_rep_img[] = $rep;
     }
-
+	function w3StrReplaceSetJs($str, $rep)
+    {
+        global $str_replace_str_js, $str_replace_rep_js;
+        $str_replace_str_js[] = $str;
+        $str_replace_rep_js[] = $rep;
+    }
 
     function w3StrReplaceBulkJson($str = array(), $rep = array())
     {
@@ -458,8 +481,12 @@ class w3core{
             $str_replace_str_img = array();
             $str_replace_rep_img = array();
         }
-		$this->html = str_replace(array_merge($str_replace_str_array, $str_replace_str_css, $str_replace_str_js, $str_replace_str_img), array_merge($str_replace_rep_array, $str_replace_rep_css, $str_replace_rep_js, $str_replace_rep_img), $this->html);
-    }
+		$this->w3DebugTime('start json merge');
+		$str_replace_str_array = array_merge($str_replace_str_img, $str_replace_str_css, $str_replace_str_js);
+		$str_replace_rep_array = array_merge($str_replace_rep_img, $str_replace_rep_css, $str_replace_rep_js);
+		$this->w3DebugTime('end json merge');
+		$this->html = str_replace($str_replace_str_array, $str_replace_rep_array, $this->html);
+	}
 	function w3GetFullUrlCachePath($full_url = '')
     {
         $cache_path = $this->w3CheckFullUrlCachePath($full_url);
@@ -676,13 +703,14 @@ class w3core{
     function w3RemoveCriticalCssCacheFiles()
     {
         w3UpdateOption('critical_css_delete_time', gmdate('d:m:Y::h:i:sa') . $this->w3JsonEncode($_REQUEST), 'no');
-        $this->w3Rmdir($this->w3GetCriticalCachePath());
+        $this->w3Rmdir($this->add_settings['critical_css_path']);
         $this->w3DeleteServerCache();
         w3UpdateOption('w3speedup_preload_css', '', 'no');
         w3UpdateOption('w3speedup_preload_css_total', 0, 'no');
         return true;
 
     }
+	
 	function w3SetAllLinks($data, $resources = array())
     {
         $resource_arr = array();
@@ -951,7 +979,7 @@ class w3core{
 	}
 	function w3AddPageCriticalCss(){
 		if(!empty($this->settings['optimization_on'])){
-			$preload_css = w3GetOption('w3speedup_preload_css');
+			$preload_css = $this->w3GetOption('w3speedup_preload_css');
 			$preload_css = (empty($preload_css) || !is_array($preload_css)) ? array() : $preload_css;
 			if(is_array($preload_css) && count($preload_css) > 50){
 				return;
@@ -959,11 +987,11 @@ class w3core{
 			if(!is_array($preload_css) || (is_array($preload_css) && !array_key_exists(base64_encode($this->add_settings['full_url_without_param']),$preload_css)) || (!empty($preload_css[$this->add_settings['full_url_without_param']]) && $preload_css[$this->add_settings['full_url_without_param']][0] != $this->add_settings['critical_css']) ){
 				$preload_css[base64_encode($this->add_settings['full_url_without_param'])] = array($this->add_settings['critical_css'],2,$this->w3PreloadCssPath());
 				w3UpdateOption('w3speedup_preload_css',$preload_css,'no');
-				w3UpdateOption('w3speedup_preload_css_total',(int)w3GetOption('w3speedup_preload_css_total')+1,'no');
+				w3UpdateOption('w3speedup_preload_css_total',(int)$this->w3GetOption('w3speedup_preload_css_total')+1,'no');
 				if(!empty($this->settings['enable_background_critical_css'])){
 					$this->w3ScheduleEvent('w3speedup_preload_css_min','w3speedster_every_minute');
 				}
-				return serialize(w3GetOption('w3speedup_preload_css'));
+				return serialize($this->w3GetOption('w3speedup_preload_css'));
 			}
 		}
 	}
@@ -999,7 +1027,7 @@ class w3core{
 		
 		foreach($style_tags as $style_tag){
 			$load_in_head = 0;
-			$file_name = w3GetOption('w3_rand_key');
+			$file_name = $this->w3GetOption('w3_rand_key');
 			foreach($load_style_tag_in_head_arr as $ex_css){
 				if(!empty($ex_css[0]) && !empty($style_tag) && strpos($style_tag, $ex_css[0]) !== false){
 					$styleArr[] = $style_tag;
@@ -1205,7 +1233,10 @@ class w3core{
 				if(strpos($imgnn_arr['src'],'\\') !== false){
 					continue;
 				}
-				$imgnn_arr['src'] = urldecode($imgnn_arr['src']);
+				$imgnn_arr['src'] = urldecode(trim($imgnn_arr['src']));
+				if(strpos($imgnn_arr['src'],'?') !== false){
+					$imgnn_arr['src'] = $this->removeQueryParams($imgnn_arr['src']);
+				}
 				if(!$this->w3IsExternal($imgnn_arr['src'])){
 					list($img_root_path,$img_root_url) = $this->getImgRootPath($imgnn_arr['src']);
 					$w3_img_ext = '.'.pathinfo($imgnn_arr['src'], PATHINFO_EXTENSION);
@@ -1284,6 +1315,11 @@ class w3core{
                 $this->w3StrReplaceSetImg($img,$imgnn);
             }
 		}
+	}
+	function removeQueryParams($url) {
+		$parsedUrl = parse_url($url);
+		$cleanUrl = $parsedUrl['scheme'] . '://' . $parsedUrl['host'] . (isset($parsedUrl['path']) ? $parsedUrl['path'] : '');
+		return $cleanUrl;
 	}
 	function getImageAttributes($imgnn,$imgnn_arr,$img_size){
 		if(empty($imgnn_arr['width']) || $imgnn_arr['width'] == 'auto' || $imgnn_arr['width'] == '100%'){
@@ -1559,8 +1595,8 @@ class w3core{
 		return $this->w3speedsterGetContents($webVitalspath);;
 	}
 	function w3CriticalCssDetails(){
-		$preload_total = (int)w3GetOption('w3speedup_preload_css_total');
-		$que = count((array)w3GetOption('w3speedup_preload_css'));
+		$preload_total = (int)$this->w3GetOption('w3speedup_preload_css_total');
+		$que = count((array)$this->w3GetOption('w3speedup_preload_css'));
 		$preload_created = $preload_total - ($que > 0 ? $que : 0);	
 		$preload_created = $preload_created < 0 ? 0 : $preload_created;
 		return array($preload_total,$preload_created);

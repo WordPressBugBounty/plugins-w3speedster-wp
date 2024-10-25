@@ -1,6 +1,6 @@
 <?php
 namespace W3speedster;
-
+checkDirectCall();
 class w3speedster_css extends w3speedster{
     
     function w3RemoveCssComments( $minify ){
@@ -76,7 +76,10 @@ class w3speedster_css extends w3speedster{
                 if(strpos($url,'index.php') !== false){
 					$string = $this->w3CombineGoogleFonts($match1) ? str_replace('@import '.$match.';','', $string) : $string;
 				}else{
-					$response = $this->w3RemoteGet($match1);
+					$match_arr = $this->w3ParseUrl($match1);
+					$match_arr['scheme'] = empty($match_arr['scheme']) ? 'https' : $match_arr['scheme'];
+					$match_arr['query'] = empty($match_arr['query']) ? '' : '?'.$match_arr['query'];
+					$response = $this->w3RemoteGet($match_arr['scheme'].'://'.$match_arr['host'].$match_arr['path'].$match_arr['query']);
 					if(!empty($response)){
 						$string = str_replace('@import '.$match.';',$response, $string);
 					}
@@ -181,7 +184,7 @@ class w3speedster_css extends w3speedster{
 	}
 	
 	function w3CreateFileCacheCss($path){
-		$file_name = w3GetOption('w3_rand_key');
+		$file_name = $this->w3GetOption('w3_rand_key');
 		$new_path = $this->add_settings['css_ext'] != '.css' ? $this->rightReplace($path,'.css',$this->add_settings['css_ext']) : $path ;
         $cache_file_path = $this->w3GetCachePath('css').'/'.$file_name.'/'.ltrim($new_path,'/');
         if( !file_exists($cache_file_path) ){
@@ -221,24 +224,7 @@ class w3speedster_css extends w3speedster{
 			return str_replace($this->add_settings['document_root'],'',$cache_file_path);
 		}
     }
-    function w3CreateFileCacheCssUrl($url){
-        $cache_file_path = $this->w3GetCachePath('css').'/'.md5($url).$this->add_settings['css_ext'];
-        if( !file_exists($cache_file_path) && $this->w3Endswith($url, '.php') ){
-            $css = $this->w3speedsterGetContents($url);
-			if(function_exists('w3speedup_internal_css_customize')){
-				$css = w3speedup_internal_css_customize($css,$url);
-			}
-			
-			if(!empty($this->settings['hook_internal_css_customize'])){
-				$code = str_replace(array('$css','$path'),array('$args[0]','$args[1]'),$this->settings['hook_internal_css_customize']);
-				$css = $this->hookCallbackFunction($code,$css,$path);
-			}
-			$minify = $this->w3CssCompress($this->w3RelativeToAbsolutePath($url,$css));
-            $this->w3CreateFile($cache_file_path, $minify);
-        }
-        return str_replace($this->add_settings['document_root'],'',$cache_file_path);
-    }
-
+    
     function minifyCss($css_links){ 
 		if(!empty($this->settings['exclude_page_from_load_combined_css']) && $this->w3CheckIfPageExcluded($this->settings['exclude_page_from_load_combined_css'])){
 			return $this->html;
@@ -269,8 +255,6 @@ class w3speedster_css extends w3speedster{
 			}
 			
 			$css_links_arr = array();
-			$upload_dir   = wp_upload_dir();
-			$upload_dir['baseurl'] = $enable_cdn ? str_replace($this->add_settings['site_url'],$this->add_settings['image_home_url'],$upload_dir['baseurl']) : $upload_dir['baseurl'];
 			foreach($css_links as $key => $css){
 				$css_obj = $this->w3ParseLink('link',str_replace($this->add_settings['image_home_url'],$this->add_settings['site_url'],$css));
 				if( !empty($css_obj['rel']) && strpos($css_obj['rel'],'stylesheet') !== false && !empty($css_obj['href']) ){
@@ -351,16 +335,13 @@ class w3speedster_css extends w3speedster{
 					if(!$this->w3IsExternal($css_obj['href'])){
 						if($this->w3Endswith($css_obj['href'], '.php') || strpos($css_obj['href'], '.php?') !== false ){
 							$org_css = $url_array['path'];
-							$url_array['path'] = $this->w3CreateFileCacheCssUrl($css_obj['href']);
+							$url_array['path'] = $css_obj['href'];
 							$css_obj['href'] = $this->add_settings['home_url'].$url_array['path'];
 						}elseif(!file_exists($this->add_settings['document_root'].$url_array['path'])){
 							if($this->w3Endswith($css_obj['href'], '.css') || strpos($css_obj['href'], '.css?') !== false ){
 								$this->w3StrReplaceSetCss($css,'');
 								continue;
 							}
-							/*$org_css = $url_array['path'];
-							$url_array['path'] = $this->w3CreateFileCacheCssUrl($css_obj['href']);
-							$css_obj['href'] = $this->add_settings['home_url'].$url_array['path'];*/
 						}elseif(filesize($this->add_settings['document_root'].$url_array['path']) > 0){
 							$org_css = $url_array['path'];
 							$url_array['path'] = $this->w3CreateFileCacheCss($url_array['path']);

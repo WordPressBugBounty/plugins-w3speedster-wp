@@ -1,9 +1,7 @@
 <?php
 namespace W3speedster;
 
-if (!defined('ABSPATH')) {
-    exit;
-}
+checkDirectCall();
 
 class w3speedster extends w3core
 {
@@ -18,7 +16,7 @@ class w3speedster extends w3core
             $arr = (array) json_decode('{"license_key":"","w3_api_url":"","is_activated":"","optimization_on":"on","cdn":"","exclude_cdn":"","lbc":"on","gzip":"on","remquery":"on","lazy_load":"on","lazy_load_iframe":"on","lazy_load_video":"on","lazy_load_px":"200","webp_jpg":"on","webp_png":"on","webp_quality":"90","img_quality":"90","exclude_lazy_load":"base64\r\nlogo\r\nrev-slidebg\r\nno-lazy\r\nfacebook\r\ngoogletagmanager","exclude_pages_from_optimization":"wp-login.php\r\n\/cart\/\r\n\/checkout\/","cache_path":"","css":"on","load_critical_css":"on","exclude_css":"","force_lazyload_css":"","load_combined_css":"after_page_load","internal_css_delay_load":"10","google_fonts_delay_load":".2","exclude_page_from_load_combined_css":"","custom_css":"","js":"on","exclude_javascript":"","custom_javascript":"","exclude_inner_javascript":"","force_lazy_load_inner_javascript":"googletagmanager\r\nconnect.facebook.net\r\nstatic.hotjar.com\r\njs.driftt.com","load_combined_js":"on_page_load","internal_js_delay_load":"10","exclude_page_from_load_combined_js":"","custom_js":""}');
             w3UpdateOption('w3_speedup_option', $arr);
         }
-        $this->settings = w3GetOption('w3_speedup_option', true);
+        $this->settings = $this->w3GetOption('w3_speedup_option', true);
 
         if ($this->settings == 1) {
             add_action('admin_notices', array($this, 'w3RecommendedSettings'));
@@ -38,6 +36,7 @@ class w3speedster extends w3core
         }
 		$this->add_settings['network_site_url'] = rtrim(network_site_url(),'/');
 		$this->add_settings['is_multisite'] = function_exists('is_multisite') && is_multisite() /*&& $this->add_settings['network_site_url'] != $this->add_settings['site_url']*/;
+		$this->add_settings['is_multisite_networkadmin'] = $this->add_settings['is_multisite'] && function_exists('is_network_admin') && is_network_admin();
 		$this->add_settings['isMultisiteSubDomain'] = $this->add_settings['is_multisite'] && $this->add_settings['site_url'] != $this->add_settings['network_site_url'];
 		$this->add_settings['site_url_arr'] = wp_parse_url($this->add_settings['site_url']);
         $this->add_settings['secure'] = (isset($this->add_settings['home_url']) && strpos($this->add_settings['home_url'], 'https') !== false) ? 'https://' : 'http://';
@@ -77,7 +76,7 @@ class w3speedster extends w3core
         $this->add_settings['is_mobile'] = function_exists('wp_is_mobile') ? wp_is_mobile() : 0;
         $this->add_settings['load_ext_js_before_internal_js'] = !empty($this->settings['load_external_before_internal']) ? explode("\r\n", $this->settings['load_external_before_internal']) : array();
         $this->add_settings['load_js_for_mobile_only'] = !empty($this->settings['load_js_for_mobile_only']) ? $this->settings['load_js_for_mobile_only'] : '';
-        $this->add_settings['w3_rand_key'] = w3GetOption('w3_rand_key');
+        $this->add_settings['w3_rand_key'] = $this->w3GetOption('w3_rand_key');
 		$this->add_settings['excludedImg'] = !empty($this->settings['exclude_lazy_load']) ? explode("\r\n",stripslashes($this->settings['exclude_lazy_load'])) : array();
 		$this->add_settings['excludedImg'] = array_merge($this->add_settings['excludedImg'],array('about:blank','gform_ajax'));
         if (!empty($this->add_settings['is_mobile']) && !empty($this->add_settings['load_js_for_mobile_only'])) {
@@ -151,7 +150,7 @@ class w3speedster extends w3core
 		if(file_exists($critical_css_file)){
 			$this->add_settings['critical_css'] = $this->w3speedsterGetContents($critical_css_file);
 		}
-		$this->add_settings['w3-wget'] = (int)w3GetOption('w3-wget');
+		$this->add_settings['w3-wget'] = (int)$this->w3GetOption('w3-wget');
 		$this->add_settings['wptouch'] = false;
         $exclude_cdn_arr = !empty($this->add_settings['exclude_cdn']) ? $this->add_settings['exclude_cdn'] : array();
 		$this->add_settings['blank_image_url'] = (($this->add_settings['enable_cdn'] && !in_array('.png',$exclude_cdn_arr)) ? str_replace($this->add_settings['site_url'],$this->add_settings['image_home_url'],$this->add_settings['upload_base_url']) : $this->add_settings['upload_base_url']).'/blank.png';
@@ -189,7 +188,7 @@ class w3speedster extends w3core
     
     function w3SaveIndividualSetting($key, $value)
     {
-        $settings = w3GetOption('w3_speedup_option', true);
+        $settings = $this->w3GetOption('w3_speedup_option', true);
         if (array_key_exists($key, $settings)) {
             $settings[$key] = $value;
             w3UpdateOption('w3_speedup_option', $settings);
@@ -243,11 +242,11 @@ class w3speedster extends w3core
         echo '<div class="notice notice-info" id="w3speedster-setup-wizard-notice">';
         printf(
             '<p id="w3speedster-heading"><strong>%s</strong></p>',
-            esc_html__('W3speedster Setup', 'w3speedster')
+            $this->translate_('W3speedster Setup')
         );
         echo '<p><form method="post">';
         submit_button(
-            __('Use Recommended Settings', 'w3speedster'),
+            $this->translate_('Use Recommended Settings'),
             'primary',
             'w3speedster-use-recommended-settings',
             false,
@@ -312,10 +311,7 @@ class w3speedster extends w3core
 	function isPluginActive( $plugin ) {
 		return in_array( $plugin, (array) get_option( 'active_plugins', array() ) ) || $this->isPluginActiveForNetwork( $plugin );
 	}
-    function createNonce($key){
-		return wp_create_nonce($key);
-	}
-	function w3GetCurlErrorMsg($response){
+    function w3GetCurlErrorMsg($response){
 		return $response->get_error_message();
 	}
     function w3PreloadCssPath($url = '')
@@ -437,8 +433,7 @@ class w3speedster extends w3core
         $this->w3CheckIfFolderExists($cache_path);
         return $cache_path;
     }
-
-    function w3Mkdir($path,$permission,$recusive){
+	function w3Mkdir($path,$permission,$recusive){
 		return wp_mkdir_p($path,$permission,$recusive);
 	}
 
@@ -484,7 +479,7 @@ class w3speedster extends w3core
 				//echo 'rocket'.$url.$this->add_settings['w3-wget']; print_R($options); 
 				//echo $url;
 				//print_r($response['response']['code']);echo $response['body']; exit;
-				if ((int)$response['response']['code'] === 200 && !empty($response['body'])) {
+				if (!is_wp_error($response) && (int)$response['response']['code'] === 200 && !empty($response['body'])) {
                     return $response['body'];
                 } else {
                     return $this->w3RemoteGet($url,$params,2);
@@ -606,9 +601,6 @@ class w3speedster extends w3core
 		if(!empty($code)){
 			$code = stripcslashes($code);
 			// @codingStandardsIgnoreLine
-			eval("$code");
-			
-			
 			return $args[0];
 		}
 	}
@@ -619,7 +611,7 @@ class w3speedster extends w3core
         $data = '<?php
         /**
          * Advanced Cache PHP file for WordPress
-         * Added By W3speedster Pro
+         * Added By W3speedster Pro-'.W3SPEEDSTER_PLUGIN_VERSION.'
          
          */
 		$expiryTime = '.($this->settings['html_caching_expiry_time'] ? $this->settings['html_caching_expiry_time'] : 3600).';
@@ -1196,7 +1188,7 @@ class w3speedster extends w3core
 		} else {
 			$img_to_opt = $wpdb->get_var("SELECT count(ID) FROM {$wpdb->prefix}posts WHERE post_type='attachment'");
 		}
-		$opt_offset = w3GetOption('w3speedup_opt_offset');
+		$opt_offset = $this->w3GetOption('w3speedup_opt_offset');
 		$img_remaining = (int) $img_to_opt - (int) $opt_offset;
 		return array($img_to_opt,$img_remaining);
 	}
@@ -1210,14 +1202,14 @@ class w3speedster extends w3core
 	function esc_url($text){
 		return esc_url($text);
 	}
-	function translate($text,$domain){
-		_e($text,$domain);
+	function translate($text){
+		_e($text,'w3speedster-wp');
 	}
 	function esc_attr($text){
 		return esc_attr($text);
 	}
-	function translate_($text,$domain){
-		return __($text,$domain);
+	function translate_($text){
+		return __($text,'w3speedster-wp');
 	}
 	function createSecureKey($option){
 		return wp_create_nonce($option);
@@ -1237,14 +1229,14 @@ class w3speedster extends w3core
 	function w3AdminNoticeImportSuccess() {
 		?>
 		<div class="notice notice-success is-dismissible">
-			<p><?php _e( 'Data imported successfully!', 'w3speedster' ); ?></p>
+			<p><?php _e( 'Data imported successfully!' ); ?></p>
 		</div>
 		<?php
 	}
 	function w3AdminNoticeImportFail(){
 		?>
 		<div class="error notice-error is-dismissible">
-			<p><?php _e( 'Data import failed', 'w3speedster' ); ?></p>
+			<p><?php _e( 'Data import failed' ); ?></p>
 		</div>
 		<?php
 	}
@@ -1259,6 +1251,13 @@ class w3speedster extends w3core
 		if (file_exists($advancedCacheFile)){
 			$this->w3DeleteFile($advancedCacheFile);
 		}
+	}
+	function removeAdvanceCacheFileAndRedirect(){
+		$this->removeAdvanceCacheFile();
+		$this->removeAdvanceCacheRedirect();
+		
+	}
+	function removeAdvanceCacheRedirect(){
 		$redirect_url = remove_query_arg('delete_ac');
 		wp_redirect($redirect_url);
 		exit;
@@ -1291,7 +1290,7 @@ class w3speedster extends w3core
 		}elseif(isset($_POST['html_caching']) && $_POST['html_caching'] == 'on' && $_POST['by_serve_cache_file'] == 'htaccess'){
 			$htaccessPath = $this->add_settings['document_root'] . "/.htaccess";
 			if($htaccessContent = $this->w3speedsterGetContents($htaccessPath)){
-				$this->w3SpeedsterRemoveAdvCacheFile();
+				$this->removeAdvanceCacheFile();
 				$htaccess = preg_replace("/#\s?BEGIN\s?W3HTMLCACHE.*?#\s?END\s?W3HTMLCACHE/s", "", $htaccessContent);
 				$data = $this->w3speedsterGetHtaccessData($array['cache_path']);
 				$htaccess = $data. PHP_EOL .$htaccess;
@@ -1299,6 +1298,9 @@ class w3speedster extends w3core
 			}else{
 				return array("htaccess not writable", "w3speedster");
 			}
+		}elseif(empty($_POST['html_caching'])){
+			$this->removeAdvanceCacheFile();
+			$this->w3SpeedsterRemoveHtmlCacheCode();
 		}
 		
 	}
@@ -1311,8 +1313,8 @@ class w3speedster extends w3core
 		// Check if the advanced-cache.php file exists and not by w3speedster
 		// @codingStandardsIgnoreLine
 		if (file_exists($advancedCacheFile) && strpos(file_get_contents($advancedCacheFile), 'Added By W3speedster Pro') === false && $this->add_settings['advanced_cache_exist'] == 1) {
-			echo '<div class="advance-cache-exist-error">' . $this->translate_('The advanced-cache.php file already exists. Please delete this file and remove the plugin that created it.', 'w3speedster') . '</div>';
-			echo '<button type="button" class="btn force-delete-ac"><a href="' . $this->esc_url($_SERVER['REQUEST_URI']) . '&delete_ac=1">' . $this->translate_('Force Delete File', 'w3speedster') . '</a></button>';
+			echo '<div class="advance-cache-exist-error">' . $this->translate_('The advanced-cache.php file already exists. Please delete this file and remove the plugin that created it.') . '</div>';
+			echo '<button type="button" class="btn force-delete-ac"><a href="' . $this->esc_url($_SERVER['REQUEST_URI']) . '&delete_ac=1">' . $this->translate_('Force Delete File') . '</a></button>';
 		}
 	}
 	function enqueueScripts(){
@@ -1342,8 +1344,7 @@ class w3speedster extends w3core
 			return 'Request not valid';
 		}
 		
-        $w3speedster_init = new w3speedster();
-		$data_id = !empty($this->add_settings['wp_get']['data_id']) ? $this->add_settings['wp_get']['data_id'] : '';
+        $data_id = !empty($this->add_settings['wp_get']['data_id']) ? $this->add_settings['wp_get']['data_id'] : '';
 		$data_type = !empty($this->add_settings['wp_get']['data_type']) ? $this->add_settings['wp_get']['data_type'] : '';
         if(!empty($data_id) && !empty($data_type)){
 			if($data_type == 'category'){
@@ -1353,9 +1354,9 @@ class w3speedster extends w3core
 			}
 			$path = $this->w3PreloadCssPath($url);
 			$this->w3Rmfiles($path);
-			echo esc_html(round( (int)w3GetOption('w3_speedup_filesize') / 1024/1024 , 2));
+			echo esc_html(round( (int)$this->w3GetOption('w3_speedup_filesize') / 1024/1024 , 2));
 		}else{
-			$response =round( (int)$w3speedster_init->w3RemoveCriticalCssCacheFiles(),2);
+			$response =round( (int)$this->w3RemoveCriticalCssCacheFiles(),2);
 			echo esc_html($response);
 		}
 		// @codingStandardsIgnoreLine
@@ -1445,9 +1446,9 @@ class w3speedster extends w3core
 				$this->w3speedsterPutContents($path.".htaccess", $htaccess);
 			}
 		}else{
-			return array(__("Options have been saved", 'w3speedster'), "updated");
+			return array($this->translate_("Options have been saved"), "updated");
 		}
-		return array(__("Options have been saved", 'w3speedster'), "updated");
+		return array($this->translate_("Options have been saved"), "updated");
 
 	}
 	function w3Insert_404RedirectToFile($htaccess){
@@ -1620,7 +1621,7 @@ class w3speedster extends w3core
 		$form_fields['optimize_image'] = array(
 			'label'         =>'',
 			'input'         => 'html',
-			'html'          => '<div class="loader-sec"><div class="loader"></div></div><a href="#" data-id="' . $post->ID  . '" class="optimize_media_image button-secondary button-large" title="' . esc_attr( __( 'Optimize image', 'w3speedster' ) ) . '">' . __( 'Optimize Image', 'w3speedster' ) . '<i class="dashicons dashicons-saved" style="vertical-align: sub;"></i></a>',
+			'html'          => '<div class="loader-sec"><div class="loader"></div></div><a href="#" data-id="' . $post->ID  . '" class="optimize_media_image button-secondary button-large" title="' . $this->translate_( 'Optimize image' ) . '">' . $this->translate_( 'Optimize Image' ) . '<i class="dashicons dashicons-saved" style="vertical-align: sub;"></i></a>',
 			'show_in_modal' => true,
 			'show_in_edit'  => false,
 		);
@@ -1653,10 +1654,10 @@ class w3speedster extends w3core
 				$this->w3speedsterPutContents($htaccessPath, $htaccess);
 			}
 	}
-	function w3SpeedsterRemoveAdvCacheFile(){
-		$advancedCacheFile = WP_CONTENT_DIR . '/advanced-cache.php';
-		if(file_exists($advancedCacheFile) && strpos($this->w3speedsterGetContents($advancedCacheFile),'Added By W3speedster Pro') !== false){
-			$this->w3DeleteFile($advancedCacheFile);
-		}
+	function w3GetOption($option){
+		return w3GetOption($option);
+	}
+	function w3UpdateOption($option){
+		return w3GetOption($option);
 	}
 }

@@ -243,7 +243,9 @@ li.w3_exclusions.active a:before{
 li.w3_css a:before {
     content: "\f13c";
 }
-
+li.w3_cdn a:before {
+    content: "\f0c2";
+}
 li.w3_general a:before {
     content: "\f1c9";
 }
@@ -455,6 +457,7 @@ label.switch input:checked + .checked:before {
 label.switch input:checked + .checked {
     background-color: #20a5b8;
 }
+.w3-cdn .w3d-flex.gap20,
 .way_to_psi .w3d-flex.gap20,
 .turn_on_optimization.w3d-flex.gap20,
 .manage-separately.w3d-flex.gap20,
@@ -1295,7 +1298,7 @@ section#webvitalslogs .filter-row + .filter-row{
 
 
 
-.way_to_psi .w3d-flex.gap20, .turn_on_optimization .w3d-flex.gap20, .css_box .w3d-flex.gap20, .js_box .w3d-flex.gap20, .caches_box .w3d-flex.gap20, .cdn_resources .w3d-flex.gap20, .html-cache-main .w3d-flex.gap20 {
+.w3-cdn .w3d-flex.gap20, .way_to_psi .w3d-flex.gap20, .turn_on_optimization .w3d-flex.gap20, .css_box .w3d-flex.gap20, .js_box .w3d-flex.gap20, .caches_box .w3d-flex.gap20, .cdn_resources .w3d-flex.gap20, .html-cache-main .w3d-flex.gap20 {
     flex-wrap: wrap;
     gap: 5px;
     margin: 10px 0;

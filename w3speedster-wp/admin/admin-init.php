@@ -11,7 +11,6 @@ class w3speedster_admin extends w3speedster{
 		if(!empty($_POST['import_text']) && isset( $_POST['_wpnonce'] ) && $this->checkSecurityKey( $_POST['_wpnonce'], 'w3_settings' )){
 			$this->importData($_POST['import_text']);
 		}
-		
 		if(!empty($this->add_settings['wp_get']['page']) && $this->add_settings['wp_get']['page'] == 'w3_speedster' && isset( $_POST['_wpnonce'] ) && $this->checkSecurityKey( $_POST['_wpnonce'], 'w3_settings' )){
 			$this->w3SaveOptions();
 		}
@@ -23,13 +22,13 @@ class w3speedster_admin extends w3speedster{
 			w3UpdateOption('w3speedup_preload_css','','no');
 		}
 		if(!empty($this->add_settings['wp_get']['w3_critical_css_data'])){
-			print_r(w3GetOption('w3-critical-deleted'));
+			print_r($this->w3GetOption('w3-critical-deleted'));
 		}
 		if(!empty($this->add_settings['wp_get']['reset'])){
 			$this->resetImageOptCount();
 		}
 		if(!empty($this->add_settings['wp_get']['delete_ac'])){
-			$this->removeAdvanceCacheFile();
+			$this->removeAdvanceCacheFileAndRedirect();
 		}
 		if(!empty($this->add_settings['wp_get']['reset_css_que'])){
 			w3UpdateOption('w3speedup_preload_css','', 'no');
@@ -41,7 +40,7 @@ class w3speedster_admin extends w3speedster{
 		$response = json_decode($res);
 		if(!empty($response[0]) && $response[0] == 'fail' && strpos($response[1],'could not verify-1') !== false){
 			w3UpdateOption('w3_key_log',$this->w3JsonEncode($response));
-			$settings = w3GetOption( 'w3_speedup_option', true );
+			$settings = $this->w3GetOption( 'w3_speedup_option', true );
 			$settings['is_activated'] = '';
 			w3UpdateOption( 'w3_speedup_option', $settings,'no' );	
 		}
@@ -65,7 +64,7 @@ class w3speedster_admin extends w3speedster{
 			}
 			$this->checkHtmlCacheSettings();
 			w3UpdateOption( 'w3_speedup_option', $array,'no' );		
-			$this->settings = w3GetOption( 'w3_speedup_option', true );
+			$this->settings = $this->w3GetOption( 'w3_speedup_option', true );
 			
 		}
 	}

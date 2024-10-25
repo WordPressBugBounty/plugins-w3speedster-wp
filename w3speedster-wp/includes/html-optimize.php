@@ -1,9 +1,7 @@
 <?php
 namespace W3speedster;
 
-if ( ! defined( 'ABSPATH' ) ) {
-    exit;
-}
+checkDirectCall();
 
 class w3speed_html_optimize extends w3speedster_js{
 	public $current_page_content_type = '';
@@ -139,6 +137,7 @@ class w3speed_html_optimize extends w3speedster_js{
 			if(!empty($this->settings['lazy_load_audio'])){
 				$lazyload[] = 'audio';
 			}
+			$this->w3DebugTime('parse all links');
             $all_links = $this->w3SetAllLinks($this->html,$lazyload);
 			$this->w3DebugTime('after create all links');
             if(!empty($all_links['script'])){
@@ -168,7 +167,8 @@ class w3speed_html_optimize extends w3speedster_js{
 				$this->html .= 'rocket22'.W3SPEEDSTER_PLUGIN_VERSION.str_replace($this->add_settings['document_root'],'',$this->w3PreloadCssPath()).'--'.$this->add_settings['critical_css'].'--'.file_exists($this->w3PreloadCssPath().'/'.$this->add_settings['critical_css']);
 			}
 			if(!empty($this->settings['load_critical_css'])){
-				if(!file_exists($this->w3PreloadCssPath().'/'.$this->add_settings['critical_css'])){
+				if(!file_exists($this->w3PreloadCssPath().'/'.$this->add_settings['critical_css']) || filesize($this->w3PreloadCssPath().'/'.$this->add_settings['critical_css']) < 10){
+					@unlink($this->w3PreloadCssPath().'/'.$this->add_settings['critical_css']);
 					$this->w3AddPageCriticalCss();
 				}else{
 					$critical_css = $this->w3speedsterGetContents($this->w3PreloadCssPath().'/'.$this->add_settings['critical_css']);
@@ -577,7 +577,7 @@ class w3speed_html_optimize extends w3speedster_js{
     }
 	
 	function w3IncrementPrioritizedImg($attach_id=''){
-		$opt_priority = w3GetOption('w3speedup_opt_priortize');
+		$opt_priority = $this->w3GetOption('w3speedup_opt_priortize');
 		if(empty($opt_priority) || !is_array($opt_priority)){
 			$opt_priority = array();
 		}

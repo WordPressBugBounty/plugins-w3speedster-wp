@@ -6,7 +6,7 @@ Plugin Name: W3Speedster Pro
 
 Description: Speedup the site with good scores on google page speed test and Gtmetrix
 
-Version: 7.25
+Version: 7.27
 
 Author: W3speedster
 
@@ -33,26 +33,32 @@ if (!defined('W3SPEEDSTER_WP_CONTENT_BASENAME')) {
 	define("W3SPEEDSTER_WP_CONTENT_DIR", dirname(W3SPEEDSTER_WP_PLUGIN_DIR));
 	define("W3SPEEDSTER_WP_CONTENT_BASENAME", basename(W3SPEEDSTER_WP_CONTENT_DIR));
 }
-define( 'W3SPEEDSTER_PLUGIN_VERSION', '7.25' );
+define( 'W3SPEEDSTER_PLUGIN_VERSION', '7.27' );
 define( 'W3SPEEDSTER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'W3SPEEDSTER_PLUGIN_FILE', __FILE__ );
 define( 'W3SPEEDSTER_URL', plugin_dir_url( __FILE__ ) );
+
+function checkDirectCall(){
+	if ( ! defined( 'ABSPATH' ) ) {
+		exit;
+	}
+}
 require_once(W3SPEEDSTER_DIR . 'includes/core.php');
 require_once(W3SPEEDSTER_DIR . 'includes/init.php');
 
 
 function W3SpeedsterMandatoryConfigAdminNotice() {
     if ( version_compare( PHP_VERSION, '5.6', '<' )){
-        echo '<div class="error"><p>' . esc_html__( 'W3speedster requires PHP 5.6 (or higher) to function properly.', 'w3speedster' ) . '</p></div>';
+        echo '<div class="error"><p>' . esc_html__( 'W3speedster requires PHP 5.6 (or higher) to function properly.','w3speedster-wp' ) . '</p></div>';
     }
     if ( !extension_loaded ('xml')){
-        echo '<div class="error"><p>' . esc_html__( 'W3speedster requires PHP-XML module to function properly.', 'w3speedster' ) . '</p></div>';
+        echo '<div class="error"><p>' . esc_html__( 'W3speedster requires PHP-XML module to function properly.','w3speedster-wp' ) . '</p></div>';
     }
 	if(!extension_loaded('gd')){	
-		echo '<div class="error"><p>' . esc_html__( 'W3speedster image optimization requires GD module to function properly.', 'w3speedster' ) . '</p></div>';	
+		echo '<div class="error"><p>' . esc_html__( 'W3speedster image optimization requires GD module to function properly.','w3speedster-wp' ) . '</p></div>';	
 	}
 	if(!class_exists('DOMDocument')){
-		echo '<div class="error"><p>' . esc_html__( 'W3speedster requires PHP-XML module to function properly.', 'w3speedster' ) . '</p></div>';
+		echo '<div class="error"><p>' . esc_html__( 'W3speedster requires PHP-XML module to function properly.','w3speedster-wp' ) . '</p></div>';
 	}
     if ( isset( $_GET['activate'] ) ) {
         unset( $_GET['activate'] );
@@ -91,7 +97,7 @@ function w3speedsterDeactivateUnsupportedConfig() {
 function w3speedsterActionLinks( $links ) {
 
 	$links = array_merge( array(
-		'<a href="' . esc_url( add_query_arg('page','w3_speedster',admin_url( '/admin.php' ) ) ) . '">' . __( 'Settings', 'w3speedster' ) . '</a>'
+		'<a href="' . esc_url( add_query_arg('page','w3_speedster',admin_url( '/admin.php' ) ) ) . '">' . __( 'Settings' ) . '</a>'
 	), $links );
 
 	return $links;
@@ -105,7 +111,7 @@ if ( version_compare( PHP_VERSION, '5.6', '<' ) || !extension_loaded ('xml') ) {
 }
 add_filter('cron_schedules', 'w3speedsterAddCustomCronIntervals');
 function w3speedsterAddCustomCronIntervals($schedules) {
-	$schedules['w3speedup_every_minute'] = array('interval' => 60, 'display' => __('Once every minute', 'w3speedster'));
+	$schedules['w3speedup_every_minute'] = array('interval' => 60, 'display' => __('Once every minute'));
 	return $schedules;
 }
 function w3speedsterOptimizeImageOnUpload($attach_id){
@@ -166,7 +172,7 @@ function w3speedsterCheckCronNeedsRunningCallback(){
 		}
 	}
 	$preload_css = w3GetOption('w3speedup_preload_css');
-	if(count($preload_css) > 0 && !empty($this->settings['enable_background_critical_css'])){
+	if(count($preload_css) > 0 && !empty($result['enable_background_critical_css'])){
 		if ( ! wp_next_scheduled( 'w3speedup_preload_css_min' ) ) {
 			wp_schedule_event( time(), 'w3speedup_every_minute', 'w3speedup_preload_css_min' );
 		}
@@ -318,14 +324,14 @@ function w3CachePurgeActionJs() {
 		var ajaxurl = "<?php echo esc_url(admin_url('admin-ajax.php')); ?>";
 		jQuery(document).ready(function(){	
 			jQuery(".w3-speedster-cache-purge-text, #del_js_css_cache").on( "click", function() {
-				jQuery('.in-progress.d-flex.delete_css_js_cache').show();
+				jQuery('.in-progress.w3d-flex.delete_css_js_cache').show();
 				jQuery('#del_js_css_cache').attr('disabled',true);
 				jQuery('#w3_speedster_cache_purge').show();
 				jQuery('.cache_size').addClass('deleting');
 				jQuery('.w3-speedster-cache').text('Deleting...');
 				var data = {
 							'action': 'w3_speedster_cache_purge',
-							'_wpnonce':'<?php echo esc_attr(wp_create_nonce("purge_cache"));?>'
+							'_wpnonce':'<?php echo wp_create_nonce("purge_cache");?>'
 							};
 				jQuery.get(ajaxurl, data, function(response) {
 					jQuery('#w3_speedster_cache_purge').hide();
@@ -333,7 +339,7 @@ function w3CachePurgeActionJs() {
 					jQuery('.w3-speedster-cache').text('Cache Deleted!');
 					jQuery('.cache_folder_size').text(response+" MB");
 					jQuery('#del_js_css_cache').attr('disabled',false);
-					jQuery('.in-progress.d-flex.delete_css_js_cache').hide();
+					jQuery('.in-progress.w3d-flex.delete_css_js_cache').hide();
 					setTimeout(() => {
 						jQuery('.w3-speedster-cache').text('W3Speedster cache');
 					}, 2000);
@@ -343,15 +349,26 @@ function w3CachePurgeActionJs() {
 					jQuery('.w3-speedster-cache').text('try again');
 					jQuery('.cache_folder_size').text(response+" MB");
 					jQuery('#del_js_css_cache').attr('disabled',false);
-					jQuery('.in-progress.d-flex.delete_css_js_cache').hide();
+					jQuery('.in-progress.w3d-flex.delete_css_js_cache').hide();
 					setTimeout(() => {
 						jQuery('.w3-speedster-cache').text('W3Speedster cache');
 					}, 2000);
 				});
 
 			});
+			function confirmAction() {
+				var result = confirm('<?php _e("Are you sure you want to proceed? Critical css may take long time to regenerate.",'w3speedster');?>');
+				if (result) {
+					return true;
+				} else {
+					return false;
+				}
+			}
 			jQuery("#del_critical_css_cache,.w3-speedster-critical-cache-purge-text,.w3-speedster-critical-cache-purge-single-text").on( "click", function() {
-				jQuery('.in-progress.d-flex.delete_critical_css_cache').show();
+				jQuery('.in-progress.w3d-flex.delete_critical_css_cache').show();
+				if(!confirmAction()){
+					return false;
+				}
 				jQuery('#w3_speedster_cache_purge').show();
 				jQuery('.cache_size').addClass('deleting');
 				jQuery('#del_critical_css_cache').attr('disabled',true);
@@ -360,7 +377,7 @@ function w3CachePurgeActionJs() {
 				var data_type = jQuery(this).attr("data-type");
 				var data = {
 							'action': 'w3_speedster_critical_cache_purge',
-							'_wpnonce':'<?php echo esc_attr(wp_create_nonce("purge_critical_css"));?>',
+							'_wpnonce':'<?php echo wp_create_nonce("purge_critical_css");?>',
 							'data_id':data_id,
 							'data_type':data_type
 							};
@@ -370,7 +387,7 @@ function w3CachePurgeActionJs() {
 					jQuery('#w3_speedster_cache_purge').hide();
 					jQuery('.cache_size').removeClass('deleting');
 					jQuery('.w3-speedster-cache').text('Cache Deleted!');
-					jQuery('.in-progress.d-flex.delete_critical_css_cache').hide();
+					jQuery('.in-progress.w3d-flex.delete_critical_css_cache').hide();
 					setTimeout(() => {
 						jQuery('.w3-speedster-cache').text('W3Speedster cache');
 					}, 2000);
@@ -379,7 +396,7 @@ function w3CachePurgeActionJs() {
 					jQuery('#w3_speedster_cache_purge').hide();
 					jQuery('.cache_size').removeClass('deleting');
 					jQuery('.w3-speedster-cache').text('try again');
-					jQuery('.in-progress.d-flex.delete_critical_css_cache').hide();
+					jQuery('.in-progress.w3d-flex.delete_critical_css_cache').hide();
 					setTimeout(() => {
 						jQuery('.w3-speedster-cache').text('W3Speedster cache');
 					}, 2000);
@@ -388,18 +405,18 @@ function w3CachePurgeActionJs() {
 			});
 			
 			jQuery("#del_html_cache").on( "click", function() {
-				jQuery('.in-progress.d-flex.delete_html_cache').show();
+				jQuery('.in-progress.w3d-flex.delete_html_cache').show();
 				jQuery('#del_html_cache').attr('disabled',true);
 				var data = {
 							'action': 'w3_speedster_html_cache_purge',
-							'_wpnonce':'<?php echo esc_attr(wp_create_nonce("purge_html_cache"));?>'
+							'_wpnonce':'<?php echo wp_create_nonce("purge_html_cache");?>'
 							};
 				jQuery.get(ajaxurl, data, function(response) {
 					jQuery('#del_html_cache').attr('disabled',false);
-					jQuery('.in-progress.d-flex.delete_html_cache').hide();
+					jQuery('.in-progress.w3d-flex.delete_html_cache').hide();
 				}).fail(function() {
 					jQuery('#del_html_cache').attr('disabled',false);
-					jQuery('.in-progress.d-flex.delete_html_cache').hide();
+					jQuery('.in-progress.w3d-flex.delete_html_cache').hide();
 				});
 
 			});
@@ -517,7 +534,7 @@ function w3SpeedsterRegisterSiteOptionsPage() {
 }
 function w3SpeedsterOptionsPage(){
 	global $w3admin;
-	load_template( W3SPEEDSTER_DIR . "/admin/admin.php",null,['settings'=>$w3admin]);	
+	include W3SPEEDSTER_DIR . "/admin/admin.php";
 }
 
 function w3SpeedsterCachePurgeCallback(){
@@ -669,7 +686,6 @@ function w3LoadAdminCallback(){
 	add_filter( 'attachment_fields_to_edit', 'addButtonToEditMediaModalFieldsArea1' , 99, 2 );
 	add_action( 'wp_ajax_fn_w3_optimize_media_image', 'fnW3OptimizeMediaImageCallback');
 	add_action( 'wp_ajax_w3speedsterActivateLicenseKey', 'w3speedsterActivateLicenseKey' );
-	add_action( 'wp_ajax_hookBeforeStartOptimization', 'hookBeforeStartOptimization' );
 	add_action('admin_enqueue_scripts', 'w3SpeedsterAdminEnqueScript');
 	if(!empty($_GET['page']) && $_GET['page'] == 'w3_speedster'){
 		launchAdmin();
@@ -769,50 +785,7 @@ if(is_admin()){
 }
 add_action('in_plugin_update_message-w3speedster/w3speedster.php','w3speedsterPluginUpdateMessage');
 function w3speedsterPluginUpdateMessage(){
-	echo esc_html(__('License key will be required to update the plugin. To get a key, contact', 'w3speedster')) . ' <a rel="noopener noreferrer" href="https://w3speedster.com">' . esc_html__('here', 'w3speedster') . '</a>.';
-}
-
-
-function hookBeforeStartOptimization() {
-	if ( isset($_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'],'hook_callback') ) {
-		$data = json_decode(stripslashes($_POST['script']));
-		foreach ($data as $singleHook) {
-			$num = 3;
-			register_shutdown_function(function () use ($data,$num) {
-				$error = error_get_last();
-
-				if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
-					// Handle the fatal error
-					$responseData = array(
-						'error' => "Fatal error occurred: {$error['message']}",
-						'additional_data' => $data[$num]->hookKey
-					);
-					echo wp_json_encode($responseData);
-					exit;
-				}
-				
-			});
-
-			$script = !empty($singleHook->value) ? $singleHook->value : '';
-			try {
-				$test = 1;
-				// @codingStandardsIgnoreLine
-				eval("$script");
-			} catch (ParseError $p) {
-				// Handle parse error
-				$parseErrorData = array($singleHook->hookKey, ['error' => "Parse error occurred: {$p->getMessage()}"]);
-				echo wp_json_encode($parseErrorData);
-				exit;
-			} catch (Exception $e) {
-				// Handle other exceptions
-				$exceptionError = array($singleHook->hookKey, ['error' => $e->getMessage()]);
-				echo wp_json_encode($exceptionError);
-				exit;
-			}
-			
-		}
-	exit;
-	}
+	echo esc_html(__('License key will be required to update the plugin. To get a key, contact')) . ' <a rel="noopener noreferrer" href="https://w3speedster.com">' . esc_html__('here') . '</a>.';
 }
 
 function createw3CoreWebvitalsTable() {
@@ -1011,11 +984,11 @@ function w3SpeedsterDeleteLogData(){
 add_action( 'wp_ajax_nopriv_w3SpeddsterShowUrlSuggestions', 'w3SpeddsterShowUrlSuggestions' );
 add_action( 'wp_ajax_w3SpeddsterShowUrlSuggestions', 'w3SpeddsterShowUrlSuggestions' );
 function w3SpeddsterShowUrlSuggestions(){
-global $wpdb;
-$search_term = trim($_POST['s_text']); 
-$search_query = '%' . $wpdb->esc_like( $search_term ) . '%';
+	global $wpdb;
+	$search_term = trim($_POST['s_text']); 
+	$search_query = '%' . $wpdb->esc_like( $search_term ) . '%';
 
-$results = $wpdb->get_results( 
+	$results = $wpdb->get_results( 
     $wpdb->prepare( 
         "
         SELECT *

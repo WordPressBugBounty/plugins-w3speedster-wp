@@ -1,8 +1,6 @@
 <?php
 namespace W3speedster;
-if ( ! defined( 'ABSPATH' ) ) {
-    exit;
-}
+checkDirectCall();
 
 class w3speedster_optimize_image extends w3speedster{
 	public function __construct(){
@@ -95,8 +93,8 @@ class w3speedster_optimize_image extends w3speedster{
 		}
 		if(!empty($this->settings['opt_img_on_the_go'])){
 			
-			$opt_priority = w3GetOption('w3speedup_opt_priortize');
-			$opt_offset = w3GetOption('w3speedup_opt_offset');
+			$opt_priority = $this->w3GetOption('w3speedup_opt_priortize');
+			$opt_offset = $this->w3GetOption('w3speedup_opt_offset');
 			$attach_arr = array();
 			if(!empty($opt_priority)){
 				$i = 0;
@@ -120,7 +118,7 @@ class w3speedster_optimize_image extends w3speedster{
 				exit;
 			}
 		}
-		$opt_offset = w3GetOption('w3speedup_opt_offset');
+		$opt_offset = $this->w3GetOption('w3speedup_opt_offset');
 		$opt_offset = !empty($opt_offset) ? $opt_offset : 0;
 		$new_offset = $opt_offset;
 		$upload_dir = wp_upload_dir();
@@ -277,7 +275,7 @@ class w3speedster_optimize_image extends w3speedster{
 
 		$size = @getimagesize( $file );
 		if ( !$size )
-			return new WP_Error('invalid_image', __('Could not read image size'), $file);
+			return new WP_Error('invalid_image', $this->translate_('Could not read image size'), $file);
 		list($orig_w, $orig_h, $orig_type) = $size;
 
 		$dst_h = $orig_h*$max_w /$orig_w ;
@@ -305,15 +303,15 @@ class w3speedster_optimize_image extends w3speedster{
 
 		if ( IMAGETYPE_GIF == $orig_type ) {
 			if ( !imagegif( $newimage, $destfilename ) )
-				return new WP_Error('resize_path_invalid', __( 'Resize path invalid' ));
+				return new WP_Error('resize_path_invalid', $this->translate_( 'Resize path invalid' ));
 		} elseif ( IMAGETYPE_PNG == $orig_type ) {
 			if ( !imagepng( $newimage, $destfilename ) )
-				return new WP_Error('resize_path_invalid', __( 'Resize path invalid' ));
+				return new WP_Error('resize_path_invalid', $this->translate_( 'Resize path invalid' ));
 		} else {
 			$destfilename = $dest_path;
 			$return = imagejpeg( $newimage, $destfilename, apply_filters( 'jpeg_quality', $jpeg_quality, 'image_resize' ) );
 			if ( !$return )
-				return new WP_Error('resize_path_invalid', __( 'Resize path invalid' ));
+				return new WP_Error('resize_path_invalid', $this->translate_( 'Resize path invalid' ));
 		}
 
 		imagedestroy( $newimage );
