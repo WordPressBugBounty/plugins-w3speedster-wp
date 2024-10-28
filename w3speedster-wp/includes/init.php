@@ -1336,7 +1336,7 @@ class w3speedster extends w3core
 		wp_enqueue_script('w3-bootstrap',W3SPEEDSTER_URL.'assets/js/bootstrap.min.js');
 		wp_enqueue_script('w3-jquery-ui',W3SPEEDSTER_URL.'assets/js/jquery-ui.js');
 		wp_enqueue_script('w3-select2',W3SPEEDSTER_URL.'assets/js/select2.min.js');
-		wp_enqueue_script('w3-admin-core', W3SPEEDSTER_URL.'assets/js/w3-admin-core.js');
+		wp_enqueue_script('w3-admin-core', W3SPEEDSTER_URL.'assets/js/w3-admin-core.js','',wp_rand(100,1000));
 		wp_enqueue_script('wp-theme-plugin-editor');
 	}
 	function w3SpeedsterCriticalCachePurgeCallback() {

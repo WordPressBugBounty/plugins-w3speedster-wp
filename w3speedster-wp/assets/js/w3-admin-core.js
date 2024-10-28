@@ -287,15 +287,17 @@ jQuery(document).ready(function(){
 
 	jQuery('.hook_submit').on('click', function () {
 		jQuery('.save-changes-loader').show();
-		var script = [];
+		/*var script = [];
 		jQuery('.hook_before_start').each(function () {
 			var id = '#' + jQuery(this).attr('id')
 			var editorValue = jQuery(id).next(".CodeMirror").find(".CodeMirror-code").text();
 			if (editorValue.length > 1) {
 				script.push({ hookKey: id, value: editorValue });
 			}
-		});
-		checkHookData(script)
+		});*/
+		//jQuery('.main-form').submit();
+		jQuery(this).closest('form').submit();
+		/*checkHookData(script)*/
 
 	});
 
