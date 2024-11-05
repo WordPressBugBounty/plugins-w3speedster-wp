@@ -6,7 +6,7 @@ Plugin Name: W3Speedster Pro
 
 Description: Speedup the site with good scores on google page speed test and Gtmetrix
 
-Version: 7.28
+Version: 7.29
 
 Author: W3speedster
 
@@ -33,7 +33,7 @@ if (!defined('W3SPEEDSTER_WP_CONTENT_BASENAME')) {
 	define("W3SPEEDSTER_WP_CONTENT_DIR", dirname(W3SPEEDSTER_WP_PLUGIN_DIR));
 	define("W3SPEEDSTER_WP_CONTENT_BASENAME", basename(W3SPEEDSTER_WP_CONTENT_DIR));
 }
-define( 'W3SPEEDSTER_PLUGIN_VERSION', '7.28' );
+define( 'W3SPEEDSTER_PLUGIN_VERSION', '7.29' );
 define( 'W3SPEEDSTER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'W3SPEEDSTER_PLUGIN_FILE', __FILE__ );
 define( 'W3SPEEDSTER_URL', plugin_dir_url( __FILE__ ) );
@@ -846,7 +846,6 @@ $wpdb->insert($table_name, $data);
 exit;
 }
 
-add_action( 'wp_ajax_nopriv_w3SpeedsterGetLogData', 'w3SpeedsterGetLogData' );
 add_action( 'wp_ajax_w3SpeedsterGetLogData', 'w3SpeedsterGetLogData' );
 function w3SpeedsterGetLogData(){
 	global $wpdb;
@@ -927,7 +926,6 @@ function w3SpeedsterGetLogData(){
 	}
 }
 
-add_action( 'wp_ajax_nopriv_w3SpeedsterDeleteLogData', 'w3SpeedsterDeleteLogData' );
 add_action( 'wp_ajax_w3SpeedsterDeleteLogData', 'w3SpeedsterDeleteLogData' );
 function w3SpeedsterDeleteLogData(){
     global $wpdb;
@@ -981,7 +979,6 @@ function w3SpeedsterDeleteLogData(){
     exit;
 }
 
-add_action( 'wp_ajax_nopriv_w3SpeddsterShowUrlSuggestions', 'w3SpeddsterShowUrlSuggestions' );
 add_action( 'wp_ajax_w3SpeddsterShowUrlSuggestions', 'w3SpeddsterShowUrlSuggestions' );
 function w3SpeddsterShowUrlSuggestions(){
 	global $wpdb;
