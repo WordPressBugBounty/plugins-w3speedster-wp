@@ -12,15 +12,15 @@ class w3speedster_optimize_image extends w3speedster{
 		if(get_post_type($attach_id) == 'attachment'){
 			$file = get_post_meta($attach_id,'_wp_attached_file',true);
 			$file1 = get_attached_file($attach_id, true);
-			$response = $this->w3OptimizeAttachment($this->add_settings['upload_base_url'].'/'.trim($file,'/'), 0, false,$attach_id);
+			$response = $this->w3OptimizeAttachment($this->addSettings['upload_base_url'].'/'.trim($file,'/'), 0, false,$attach_id);
 			if(!empty($response['img'])	&& $response['img'] == 1){
-				$metadata = wp_get_attachment_metadata($attach_id);
+				$metadata = w3_get_attachment_metadata($attach_id);
 				if(!empty($metadata['sizes'])){
 					$file = explode('/',$metadata['file']);
 					array_pop($file);
 					$file = implode('/',$file);
 					foreach($metadata['sizes'] as $key => $sizes){
-						$this->w3DeleteFile(realpath($this->add_settings['upload_base_dir'].'/'.$file.'/'.$sizes['file']));
+						$this->w3DeleteFile(realpath($this->addSettings['upload_base_dir'].'/'.$file.'/'.$sizes['file']));
 					}
 				}
 			}
@@ -52,7 +52,7 @@ class w3speedster_optimize_image extends w3speedster{
 	function w3speedsterChangeImageName($metadata, $attachment_id, $context){
 		
 		if(empty($metadata['file'])){
-			$metadata = wp_get_attachment_metadata($attachment_id);
+			$metadata = w3_get_attachment_metadata($attachment_id);
 		}
 		if(empty($metadata['file'])){
 			return $metadata;
@@ -63,9 +63,9 @@ class w3speedster_optimize_image extends w3speedster{
 		$file = implode('/',$file);
 		if(!empty($metadata['sizes']['w3speedup-mobile'])){
 			$new_thumb_name = str_replace('x'.$metadata['sizes']['w3speedup-mobile']['height'],'xh',$metadata['sizes']['w3speedup-mobile']['file']);
-			if(is_file($this->add_settings['upload_base_dir'].'/'.$file.'/'.$metadata['sizes']['w3speedup-mobile']['file'])){
+			if(is_file($this->addSettings['upload_base_dir'].'/'.$file.'/'.$metadata['sizes']['w3speedup-mobile']['file'])){
 				// @codingStandardsIgnoreLine
-				rename($this->add_settings['upload_base_dir'].'/'.$file.'/'.$metadata['sizes']['w3speedup-mobile']['file'],$this->add_settings['upload_base_dir'].'/'.$file.'/'.$new_thumb_name);
+				rename($this->addSettings['upload_base_dir'].'/'.$file.'/'.$metadata['sizes']['w3speedup-mobile']['file'],$this->addSettings['upload_base_dir'].'/'.$file.'/'.$new_thumb_name);
 			}
 			$metadata['sizes']['w3speedup-mobile']['file'] = $new_thumb_name;
 		}
@@ -85,7 +85,7 @@ class w3speedster_optimize_image extends w3speedster{
 	function w3speedsterOptimizeImageCallback(){
 		
 		global $wpdb;
-		if(!empty($this->add_settings['wp_get']['start_type']) && $this->add_settings['wp_get']['start_type'] == 2){
+		if(!empty($this->addSettings['w3_get']['start_type']) && $this->addSettings['w3_get']['start_type'] == 2){
 			w3UpdateOption('w3speedup_opt_offset',0);
 		}
 		if(empty($this->settings['opt_jpg_png']) && empty($this->settings['webp_jpg']) && empty($this->settings['webp_png'])){
@@ -100,7 +100,7 @@ class w3speedster_optimize_image extends w3speedster{
 				$i = 0;
 				foreach($opt_priority as $key => $attach_id){
 					if(strpos($attach_id,'/themes/') !== false || strpos($attach_id,'/plugins/') !== false){
-						$imgUrl = str_replace($this->add_settings['document_root'],$this->add_settings['site_url'],$attach_id);
+						$imgUrl = str_replace($this->addSettings['documentRoot'],$this->addSettings['siteUrl'],$attach_id);
 						$image_size = getimagesize($imgUrl);
 						$this->w3OptimizeAttachment($imgUrl,0,false);
 						$this->w3OptimizeAttachmentWebp($imgUrl,$image_size[0]);
@@ -122,7 +122,7 @@ class w3speedster_optimize_image extends w3speedster{
 		$opt_offset = !empty($opt_offset) ? $opt_offset : 0;
 		$new_offset = $opt_offset;
 		$upload_dir = wp_upload_dir();
-		$offset_limit = !empty($this->add_settings['wp_get']['w3_limit']) && (int)$this->add_settings['wp_get']['w3_limit'] > 0 ? (int)$this->add_settings['wp_get']['w3_limit'] : 1;
+		$offset_limit = !empty($this->addSettings['w3_get']['w3_limit']) && (int)$this->addSettings['w3_get']['w3_limit'] > 0 ? (int)$this->addSettings['w3_get']['w3_limit'] : 1;
 		global $w3_network_option;
 		$switchedBlog = 0;
         if(w3CheckMultisite() && empty($w3_network_option['manage_site_separately'])){
@@ -154,7 +154,7 @@ class w3speedster_optimize_image extends w3speedster{
 				)
 			);
 		}
-		
+		$image_url_path = '';
 		if(!empty($attach_arr) && count($attach_arr) > 0){
 			foreach($attach_arr as $attach_id){
 				$image_url_path = get_attached_file($attach_id, true); 
@@ -180,7 +180,7 @@ class w3speedster_optimize_image extends w3speedster{
 		exit;
 	}
 	function w3OptimizeAttachment($image_url,$image_width=0,$thumb=false, $main_image='', $overwrite=false,$attach_id=0){
-		$theme_root_array = explode('/',$this->add_settings['theme_base_url']);
+		$theme_root_array = explode('/',$this->addSettings['theme_base_url']);
 		$theme_root = array_pop($theme_root_array);
 		$upload_dir = wp_upload_dir();
 		$webp_jpg = !empty($this->settings['webp_jpg']) ? 1 : 0;
@@ -188,11 +188,11 @@ class w3speedster_optimize_image extends w3speedster{
 		$optimize_image = !empty($this->settings['opt_jpg_png']) ? 1 : 0;
 		$type = pathinfo($image_url, PATHINFO_EXTENSION);
 		if(strpos($image_url,$theme_root) !== false){
-			$img_root_path = rtrim($this->add_settings['theme_base_dir'],'/');
-			$img_root_url = rtrim($this->add_settings['theme_base_url'],'/');
+			$img_root_path = rtrim($this->addSettings['theme_base_dir'],'/');
+			$img_root_url = rtrim($this->addSettings['theme_base_url'],'/');
 		}else{
-			$img_root_path = $this->add_settings['upload_base_dir'];
-			$img_root_url = $this->add_settings['upload_base_url'];
+			$img_root_path = $this->addSettings['upload_base_dir'];
+			$img_root_url = $this->addSettings['upload_base_url'];
 			
 		}
 		
@@ -203,9 +203,9 @@ class w3speedster_optimize_image extends w3speedster{
 		$image_type = array('gif','jpg','png','jpeg','webp');
 		if( $optimize_image && in_array($type,$image_type) && ($overwrite == true || (!is_file($image_url_path.'org.'.$type) && $thumb == false) || (!empty($main_image) && $thumb == true && !is_file($image_url_path.'org.'.$type) ) ) ){
 			if($image_size[0] > 3000){
-				$return['img'] = 3;/*copy($this->add_settings['document_root'].$url_array['path'],$this->add_settings['document_root'].$url_array['path'].'org.'.$type);
+				$return['img'] = 3;/*copy($this->addSettings['documentRoot'].$url_array['path'],$this->addSettings['documentRoot'].$url_array['path'].'org.'.$type);
 				$image_size[0] = 1920;
-				$this->w3speedsterResizeImage( $this->add_settings['document_root'].$url_array['path'].'org.'.$type, $this->add_settings['document_root'].$url_array['path'], $image_size[0]);*/
+				$this->w3speedsterResizeImage( $this->addSettings['documentRoot'].$url_array['path'].'org.'.$type, $this->addSettings['documentRoot'].$url_array['path'], $image_size[0]);*/
 				return $return;
 			}
 			$optmize_image = $this->optimizeImage($image_size[0],$image_url);
@@ -232,21 +232,21 @@ class w3speedster_optimize_image extends w3speedster{
     }
 	function w3OptimizeAttachmentWebp($image_url,$image_width=0,$thumb=false, $main_image='', $image_url_path='',$overwrite=false,$attach_id=0){
 		$type = pathinfo($image_url, PATHINFO_EXTENSION);
-		$theme_root_array = explode('/',$this->add_settings['theme_base_url']);
+		$theme_root_array = explode('/',$this->addSettings['theme_base_url']);
 		$theme_root = array_pop($theme_root_array);
 		if(strpos($image_url,$theme_root) !== false){
-			$img_root_path = rtrim($this->add_settings['theme_base_dir'],'/');
-			$img_root_url = rtrim($this->add_settings['theme_base_url'],'/');
+			$img_root_path = rtrim($this->addSettings['theme_base_dir'],'/');
+			$img_root_url = rtrim($this->addSettings['theme_base_url'],'/');
 		}else{
-			$img_root_path = $this->add_settings['upload_base_dir'];
-			$img_root_url = $this->add_settings['upload_base_url'];
+			$img_root_path = $this->addSettings['upload_base_dir'];
+			$img_root_url = $this->addSettings['upload_base_url'];
 			
 		}
 		
 		$image_url_path = str_replace('\\','/',$image_url);
 		$image_url_path = str_replace($img_root_url,$img_root_path,$image_url_path);
 		$image_size = !empty($image_width) ? array($image_width) : getimagesize($image_url_path);
-		$webp_path = strpos($image_url_path, $this->add_settings['upload_path']) !== false ? str_replace($this->add_settings['upload_path'],$this->add_settings['webp_path'],$image_url_path) : $this->add_settings['document_root'].$this->add_settings['webp_path'].$image_url_path;
+		$webp_path = strpos($image_url_path, $this->addSettings['uploadPath']) !== false ? str_replace($this->addSettings['uploadPath'],$this->addSettings['webp_path'],$image_url_path) : $this->addSettings['documentRoot'].$this->addSettings['webp_path'].$image_url_path;
 		//echo 'rocket'.$image_url_path; exit; 
 		//echo 'rocket'.!is_file($webp_path.'w3.webp') .'--'. is_file($image_url_path).$image_url_path.'--'.$webp_path.'w3.webp'; exit; 
 		if(!is_file($webp_path.'w3.webp') && is_file($image_url_path)){
@@ -269,7 +269,7 @@ class w3speedster_optimize_image extends w3speedster{
 		
 	}
 	function w3speedsterResizeImage( $file, $dest_path, $max_w) {
-		$image = wp_get_image_editor( $file );
+		$image = w3_get_image_editor( $file );
 		if ( !is_resource( $image ) )
 			return new WP_Error( 'error_loading_image', $image, $file );
 

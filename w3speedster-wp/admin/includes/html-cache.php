@@ -190,7 +190,7 @@
 							placeholder="<?php $admin->translate('Please Enter full cache path'); ?>">
 						<small
 							class="w3d-block"><?php $admin->translate('Default cache path:'); ?>
-							<?php echo esc_html($admin->add_settings['content_path'] . '/cache'); ?>
+							<?php echo $admin->addSettings['content_path'] . '/cache'; ?>
 						</small>
 					</div>
 				</div>

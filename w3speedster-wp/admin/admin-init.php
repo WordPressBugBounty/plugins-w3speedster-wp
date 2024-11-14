@@ -1,8 +1,6 @@
 <?php
 namespace W3speedster;
-if ( ! defined( 'ABSPATH' ) ) {
-    exit;
-}
+checkDirectCall();
 
 class w3speedster_admin extends w3speedster{
 	
@@ -11,33 +9,33 @@ class w3speedster_admin extends w3speedster{
 		if(!empty($_POST['import_text']) && isset( $_POST['_wpnonce'] ) && $this->checkSecurityKey( $_POST['_wpnonce'], 'w3_settings' )){
 			$this->importData($_POST['import_text']);
 		}
-		if(!empty($this->add_settings['wp_get']['page']) && $this->add_settings['wp_get']['page'] == 'w3_speedster' && isset( $_POST['_wpnonce'] ) && $this->checkSecurityKey( $_POST['_wpnonce'], 'w3_settings' )){
+		if(!empty($this->addSettings['w3_get']['page']) && $this->addSettings['w3_get']['page'] == 'w3_speedster' && isset( $_POST['_wpnonce'] ) && $this->checkSecurityKey( $_POST['_wpnonce'], 'w3_settings' )){
 			$this->w3SaveOptions();
 		}
 		
-		if(!empty($this->add_settings['wp_get']['page']) && $this->add_settings['wp_get']['page'] == 'w3_speedster'){
+		if(!empty($this->addSettings['w3_get']['page']) && $this->addSettings['w3_get']['page'] == 'w3_speedster'){
 			$this->enqueueScripts();
 		}
-		if(!empty($this->add_settings['wp_get']['w3_reset_preload_css'])){
-			w3UpdateOption('w3speedup_preload_css','','no');
+		if(!empty($this->addSettings['w3_get']['w3_reset_preload_css'])){
+			w3UpdateOption('w3speedsterPreloadCss','','no');
 		}
-		if(!empty($this->add_settings['wp_get']['w3_critical_css_data'])){
+		if(!empty($this->addSettings['w3_get']['w3_critical_css_data'])){
 			print_r($this->w3GetOption('w3-critical-deleted'));
 		}
-		if(!empty($this->add_settings['wp_get']['reset'])){
+		if(!empty($this->addSettings['w3_get']['reset'])){
 			$this->resetImageOptCount();
 		}
-		if(!empty($this->add_settings['wp_get']['delete_ac'])){
+		if(!empty($this->addSettings['w3_get']['delete_ac'])){
 			$this->removeAdvanceCacheFileAndRedirect();
 		}
-		if(!empty($this->add_settings['wp_get']['reset_css_que'])){
-			w3UpdateOption('w3speedup_preload_css','', 'no');
+		if(!empty($this->addSettings['w3_get']['reset_css_que'])){
+			w3UpdateOption('w3speedsterPreloadCss','', 'no');
 		}
 	}
 	
 	function w3CheckLicenseKey(){
 		$res= $this->w3speedsterValidateLicenseKey();
-		$response = json_decode($res);
+		$response = !empty($res) ? json_decode($res) : array();
 		if(!empty($response[0]) && $response[0] == 'fail' && strpos($response[1],'could not verify-1') !== false){
 			w3UpdateOption('w3_key_log',$this->w3JsonEncode($response));
 			$settings = $this->w3GetOption( 'w3_speedup_option', true );
@@ -70,10 +68,10 @@ class w3speedster_admin extends w3speedster{
 	}
     
     function w3SpeedsterCachePurgeCallback() {
-		if ( !isset( $this->add_settings['wp_get']['_wpnonce'] ) || !$this->checkSecurityKey( $this->add_settings['wp_get']['_wpnonce'],'purge_cache') ) {
-			if(!empty($this->add_settings['wp_get']['resource_url'])){
-				$url = str_replace(array($this->add_settings['home_url'],$this->add_settings['image_home_url']),'',$this->add_settings['wp_get']['resource_url']);
-				if(is_file($this->add_settings['document_root'].'/'.ltrim($url,'/'))){
+		if ( !isset( $this->addSettings['w3_get']['_wpnonce'] ) || !$this->checkSecurityKey( $this->addSettings['w3_get']['_wpnonce'],'purge_cache') ) {
+			if(!empty($this->addSettings['w3_get']['resource_url'])){
+				$url = str_replace(array($this->addSettings['homeUrl'],$this->addSettings['imageHomeUrl']),'',$this->addSettings['w3_get']['resource_url']);
+				if(is_file($this->addSettings['documentRoot'].'/'.ltrim($url,'/'))){
 					echo 'Request not valid'; exit;
 				}
 			}else{
@@ -88,7 +86,7 @@ class w3speedster_admin extends w3speedster{
 	
 	function w3SpeedsterHtmlCachePurgeCallback(){
 	   
-		if ( isset( $this->add_settings['wp_get']['_wpnonce'] ) && $this->checkSecurityKey( $this->add_settings['wp_get']['_wpnonce'],'purge_html_cache') ) {
+		if ( isset( $this->addSettings['w3_get']['_wpnonce'] ) && $this->checkSecurityKey( $this->addSettings['w3_get']['_wpnonce'],'purge_html_cache') ) {
 			 if (function_exists('exec')) {
 				exec('rm -rf ' . $this->w3GetCachePath().'/html', $output, $retval);
 					echo 'Cache Delete Successfully';

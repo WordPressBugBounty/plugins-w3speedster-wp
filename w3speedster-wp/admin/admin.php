@@ -5,8 +5,8 @@ $tab = !empty($_GET['tab']) ? $_GET['tab'] : '';
 list($img_to_opt,$img_remaining) = $admin->getImageOptimizationDetails();
 $admin->scheduleImageOptimizationCron($img_remaining);
 list($preload_total, $preload_created) = $admin->w3CriticalCssDetails();
-$networkAdmin = $admin->add_settings['is_multisite_networkadmin'] ? 1 : 0;
-$hidden_class = !empty($result['manage_site_separately']) && $admin->add_settings['is_multisite_networkadmin'] ? 'tr-hidden' : '';
+$networkAdmin = $admin->addSettings['is_multisite_networkadmin'] ? 1 : 0;
+$hidden_class = !empty($result['manage_site_separately']) && $admin->addSettings['is_multisite_networkadmin'] ? 'tr-hidden' : '';
 ?>
 <script>
 var adminUrl = "<?php echo $admin->getAjaxUrl(); ?>";

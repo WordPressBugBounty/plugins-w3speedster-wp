@@ -27,8 +27,8 @@
 				placeholder="<?php $admin->translate('Key'); ?>"
 				value="<?php echo !empty($result['license_key']) ? $admin->esc_attr($result['license_key']) : ''; ?>"
 				style="">
-			<input type="hidden" name="w3_api_url"
-				value="<?php echo !empty($result['w3_api_url']) ? $admin->esc_attr($result['w3_api_url']) : ''; ?>">
+			<input type="hidden" name="w3ApiUrl"
+				value="<?php echo !empty($result['w3ApiUrl']) ? $admin->esc_attr($result['w3ApiUrl']) : ''; ?>">
 			<input type="hidden" name="is_activated"
 				value="<?php echo !empty($result['is_activated']) ? $admin->esc_attr($result['is_activated']) : ''; ?>">
 			<input type="hidden" name="_wpnonce"

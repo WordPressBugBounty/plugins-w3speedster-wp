@@ -7,13 +7,13 @@ class w3speedster extends w3core
 {
     public function __construct()
     {
-        if (!empty($this->add_settings['wp_get']['delete-wnw-cache'])) {
+        if (!empty($this->addSettings['w3_get']['delete-wnw-cache'])) {
             add_action('admin_init', array($this, 'w3RemoveCacheFilesHourlyEventCallback'));
             add_action('admin_init', array($this, 'w3RemoveCacheRedirect'));
         }
         if (!empty($_POST['w3speedster-use-recommended-settings'])) {
 
-            $arr = (array) json_decode('{"license_key":"","w3_api_url":"","is_activated":"","optimization_on":"on","cdn":"","exclude_cdn":"","lbc":"on","gzip":"on","remquery":"on","lazy_load":"on","lazy_load_iframe":"on","lazy_load_video":"on","lazy_load_px":"200","webp_jpg":"on","webp_png":"on","webp_quality":"90","img_quality":"90","exclude_lazy_load":"base64\r\nlogo\r\nrev-slidebg\r\nno-lazy\r\nfacebook\r\ngoogletagmanager","exclude_pages_from_optimization":"wp-login.php\r\n\/cart\/\r\n\/checkout\/","cache_path":"","css":"on","load_critical_css":"on","exclude_css":"","force_lazyload_css":"","load_combined_css":"after_page_load","internal_css_delay_load":"10","google_fonts_delay_load":".2","exclude_page_from_load_combined_css":"","custom_css":"","js":"on","exclude_javascript":"","custom_javascript":"","exclude_inner_javascript":"","force_lazy_load_inner_javascript":"googletagmanager\r\nconnect.facebook.net\r\nstatic.hotjar.com\r\njs.driftt.com","load_combined_js":"on_page_load","internal_js_delay_load":"10","exclude_page_from_load_combined_js":"","custom_js":""}');
+            $arr = (array) json_decode('{"license_key":"","w3ApiUrl":"","is_activated":"","optimization_on":"on","cdn":"","exclude_cdn":"","lbc":"on","gzip":"on","remquery":"on","lazy_load":"on","lazy_load_iframe":"on","lazy_load_video":"on","lazy_load_px":"200","webp_jpg":"on","webp_png":"on","webp_quality":"90","img_quality":"90","exclude_lazy_load":"base64\r\nlogo\r\nrev-slidebg\r\nno-lazy\r\nfacebook\r\ngoogletagmanager","exclude_pages_from_optimization":"wp-login.php\r\n\/cart\/\r\n\/checkout\/","cache_path":"","css":"on","load_critical_css":"on","exclude_css":"","force_lazyload_css":"","load_combined_css":"after_page_load","internal_css_delay_load":"10","google_fonts_delay_load":".2","exclude_page_from_load_combined_css":"","custom_css":"","js":"on","exclude_javascript":"","custom_javascript":"","exclude_inner_javascript":"","force_lazy_load_inner_javascript":"googletagmanager\r\nconnect.facebook.net\r\nstatic.hotjar.com\r\njs.driftt.com","load_combined_js":"on_page_load","internal_js_delay_load":"10","exclude_page_from_load_combined_js":"","custom_js":""}');
             w3UpdateOption('w3_speedup_option', $arr);
         }
         $this->settings = $this->w3GetOption('w3_speedup_option', true);
@@ -23,106 +23,106 @@ class w3speedster extends w3core
         }
 		
         $this->settings = !empty($this->settings) && is_array($this->settings) ? $this->settings : array();
-		$this->add_settings = array();
-        $this->add_settings['HTTP_USER_AGENT'] = !empty($_SERVER["HTTP_USER_AGENT"]) ? $_SERVER["HTTP_USER_AGENT"] : '';
-		$this->add_settings['wp_get'] = $_GET;
-        $this->add_settings['home_url'] = rtrim(home_url(), '/');
+		$this->addSettings = array();
+        $this->addSettings['HTTP_USER_AGENT'] = !empty($_SERVER["HTTP_USER_AGENT"]) ? $_SERVER["HTTP_USER_AGENT"] : '';
+		$this->addSettings['w3_get'] = $_GET;
+        $this->addSettings['homeUrl'] = rtrim(home_url(), '/');
         $site_url = explode('/', rtrim(content_url(), '/'));
         array_pop($site_url);
-        $this->add_settings['site_url'] = rtrim(implode('/', $site_url),'/');
-		if (strpos($this->add_settings['home_url'], '?') !== false) {
-            $home_url_arr = explode('?', $this->add_settings['home_url']);
-            $this->add_settings['home_url'] = $home_url_arr[0];
+        $this->addSettings['siteUrl'] = rtrim(implode('/', $site_url),'/');
+		if (strpos($this->addSettings['homeUrl'], '?') !== false) {
+            $home_url_arr = explode('?', $this->addSettings['homeUrl']);
+            $this->addSettings['homeUrl'] = $home_url_arr[0];
         }
-		$this->add_settings['network_site_url'] = rtrim(network_site_url(),'/');
-		$this->add_settings['is_multisite'] = function_exists('is_multisite') && is_multisite() /*&& $this->add_settings['network_site_url'] != $this->add_settings['site_url']*/;
-		$this->add_settings['is_multisite_networkadmin'] = $this->add_settings['is_multisite'] && function_exists('is_network_admin') && is_network_admin();
-		$this->add_settings['isMultisiteSubDomain'] = $this->add_settings['is_multisite'] && $this->add_settings['site_url'] != $this->add_settings['network_site_url'];
-		$this->add_settings['site_url_arr'] = wp_parse_url($this->add_settings['site_url']);
-        $this->add_settings['secure'] = (isset($this->add_settings['home_url']) && strpos($this->add_settings['home_url'], 'https') !== false) ? 'https://' : 'http://';
-        $home_url_arr = wp_parse_url($this->add_settings['home_url']);
-		$this->settings['main_license_key'] = !empty($this->settings['license_key']) ? $this->settings['license_key'] : 'w3demo-' . $home_url_arr['host'];
-        $this->add_settings['image_home_url'] = !empty($this->settings['cdn']) ? rtrim($this->settings['cdn'], '/') : $this->add_settings['site_url'];
-        $this->add_settings['enable_cdn'] = $this->add_settings['site_url'] != $this->add_settings['image_home_url'] ? 1 : 0;
-        $this->add_settings['w3_api_url'] = !empty($this->settings['w3_api_url']) ? rtrim($this->settings['w3_api_url'],'/') : 'https://cloud.w3speedster.com/optimize';
+		$this->addSettings['network_site_url'] = rtrim(network_site_url(),'/');
+		$this->addSettings['is_multisite'] = function_exists('is_multisite') && is_multisite() /*&& $this->addSettings['network_site_url'] != $this->addSettings['siteUrl']*/;
+		$this->addSettings['is_multisite_networkadmin'] = $this->addSettings['is_multisite'] && function_exists('is_network_admin') && is_network_admin();
+		$this->addSettings['isMultisiteSubDomain'] = $this->addSettings['is_multisite'] && $this->addSettings['siteUrl'] != $this->addSettings['network_site_url'];
+		$this->addSettings['site_url_arr'] = wp_parse_url($this->addSettings['siteUrl']);
+        $this->addSettings['secure'] = (isset($this->addSettings['homeUrl']) && strpos($this->addSettings['homeUrl'], 'https') !== false) ? 'https://' : 'http://';
+        $home_url_arr = wp_parse_url($this->addSettings['homeUrl']);
+		$this->settings['mainLicenseKey'] = !empty($this->settings['license_key']) ? $this->settings['license_key'] : 'w3demo-' . $home_url_arr['host'];
+        $this->addSettings['imageHomeUrl'] = !empty($this->settings['cdn']) ? rtrim($this->settings['cdn'], '/') : $this->addSettings['siteUrl'];
+        $this->addSettings['enableCdn'] = $this->addSettings['siteUrl'] != $this->addSettings['imageHomeUrl'] ? 1 : 0;
+        $this->addSettings['w3ApiUrl'] = !empty($this->settings['w3ApiUrl']) ? rtrim($this->settings['w3ApiUrl'],'/') : 'https://cloud.w3speedster.com/optimize';
         //$sitename = 'home';
-        $this->add_settings['content_path'] = WP_CONTENT_DIR;
-        $wp_content_arr = explode('/', $this->add_settings['content_path']);
+        $this->addSettings['content_path'] = WP_CONTENT_DIR;
+        $wp_content_arr = explode('/', $this->addSettings['content_path']);
         array_pop($wp_content_arr);
-        $this->add_settings['document_root'] = rtrim(implode('/', $wp_content_arr), '/');
-        $this->add_settings['full_url'] = !empty($_SERVER['HTTP_HOST']) ? $this->add_settings['secure'] . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] : $this->add_settings['home_url'] . $_SERVER['REQUEST_URI'];
+        $this->addSettings['documentRoot'] = rtrim(implode('/', $wp_content_arr), '/');
+        $this->addSettings['full_url'] = !empty($_SERVER['HTTP_HOST']) ? $this->addSettings['secure'] . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] : $this->addSettings['homeUrl'] . $_SERVER['REQUEST_URI'];
 
-        $full_url_array = explode('?', $this->add_settings['full_url']);
-        $this->add_settings['full_url_without_param'] = $full_url_array[0];
-        $this->add_settings['wp_cache_path'] = (!empty($this->settings['cache_path']) ? $this->settings['cache_path'] : $this->add_settings['content_path'] . '/cache');
-        $this->add_settings['root_cache_path'] = $this->add_settings['wp_cache_path'] . '/w3-cache';
-        $this->add_settings['critical_css_path'] = (!empty($this->settings['cache_path']) ? $this->settings['cache_path'] : $this->add_settings['content_path']) . '/critical-css';
-        $this->add_settings['cache_path'] = str_replace($this->add_settings['document_root'], '', $this->add_settings['root_cache_path']);
-        $this->add_settings['cache_url'] = str_replace($this->add_settings['document_root'], $this->add_settings['site_url'], $this->add_settings['root_cache_path']);
-        $this->add_settings['upload_path'] = str_replace($this->add_settings['document_root'], '', $this->add_settings['content_path']);
+        $full_url_array = explode('?', $this->addSettings['full_url']);
+        $this->addSettings['full_url_without_param'] = $full_url_array[0];
+        $this->addSettings['wp_cache_path'] = (!empty($this->settings['cache_path']) ? $this->settings['cache_path'] : $this->addSettings['content_path'] . '/cache');
+        $this->addSettings['rootCachePath'] = $this->addSettings['wp_cache_path'] . '/w3-cache';
+        $this->addSettings['criticalCssPath'] = (!empty($this->settings['cache_path']) ? $this->settings['cache_path'] : $this->addSettings['content_path']) . '/critical-css';
+        $this->addSettings['cache_path'] = str_replace($this->addSettings['documentRoot'], '', $this->addSettings['rootCachePath']);
+        $this->addSettings['cacheUrl'] = str_replace($this->addSettings['documentRoot'], $this->addSettings['siteUrl'], $this->addSettings['rootCachePath']);
+        $this->addSettings['uploadPath'] = str_replace($this->addSettings['documentRoot'], '', $this->addSettings['content_path']);
         list($upload_dir['baseurl'],$upload_dir['basedir']) = $this->w3GetUploadsBasepath();
 		$upload_base_url = wp_parse_url($upload_dir['baseurl']);
-        //$this->add_settings['upload_base_url'] = strpos($upload_dir['baseurl'], $this->add_settings['site_url']) !== false ? $upload_dir['baseurl'] : $this->add_settings['site_url'] . $upload_base_url['path'];
-		$this->add_settings['upload_base_url'] = $upload_dir['baseurl'];
-        $this->add_settings['upload_base_dir'] = $upload_dir['basedir'];
-        $this->add_settings['theme_base_url'] = function_exists('get_theme_root_uri') ? get_theme_root_uri() : '';
-		if($this->add_settings['isMultisiteSubDomain']){
-			$this->add_settings['theme_base_url'] = str_replace($this->add_settings['site_url'],$this->add_settings['network_site_url'],$this->add_settings['theme_base_url']);
+        //$this->addSettings['upload_base_url'] = strpos($upload_dir['baseurl'], $this->addSettings['siteUrl']) !== false ? $upload_dir['baseurl'] : $this->addSettings['siteUrl'] . $upload_base_url['path'];
+		$this->addSettings['upload_base_url'] = $upload_dir['baseurl'];
+        $this->addSettings['upload_base_dir'] = $upload_dir['basedir'];
+        $this->addSettings['theme_base_url'] = function_exists('get_theme_root_uri') ? get_theme_root_uri() : '';
+		if($this->addSettings['isMultisiteSubDomain']){
+			$this->addSettings['theme_base_url'] = str_replace($this->addSettings['siteUrl'],$this->addSettings['network_site_url'],$this->addSettings['theme_base_url']);
 		}
-		$theme_root_array = explode('/',$this->add_settings['theme_base_url']);
-		$this->add_settings['theme_root'] = array_pop($theme_root_array);
-        $this->add_settings['theme_base_dir'] = function_exists('get_theme_root') ? get_theme_root() . '/' : '';
-		$this->add_settings['webp_path'] = $this->add_settings['upload_path'] . '/w3-webp';
-        $this->add_settings['is_mobile'] = function_exists('wp_is_mobile') ? wp_is_mobile() : 0;
-        $this->add_settings['load_ext_js_before_internal_js'] = !empty($this->settings['load_external_before_internal']) ? explode("\r\n", $this->settings['load_external_before_internal']) : array();
-        $this->add_settings['load_js_for_mobile_only'] = !empty($this->settings['load_js_for_mobile_only']) ? $this->settings['load_js_for_mobile_only'] : '';
-        $this->add_settings['w3_rand_key'] = $this->w3GetOption('w3_rand_key');
-		$this->add_settings['excludedImg'] = !empty($this->settings['exclude_lazy_load']) ? explode("\r\n",stripslashes($this->settings['exclude_lazy_load'])) : array();
-		$this->add_settings['excludedImg'] = array_merge($this->add_settings['excludedImg'],array('about:blank','gform_ajax'));
-        if (!empty($this->add_settings['is_mobile']) && !empty($this->add_settings['load_js_for_mobile_only'])) {
+		$theme_root_array = explode('/',$this->addSettings['theme_base_url']);
+		$this->addSettings['theme_root'] = array_pop($theme_root_array);
+        $this->addSettings['theme_base_dir'] = function_exists('get_theme_root') ? get_theme_root() . '/' : '';
+		$this->addSettings['webp_path'] = $this->addSettings['uploadPath'] . '/w3-webp';
+        $this->addSettings['is_mobile'] = function_exists('wp_is_mobile') ? wp_is_mobile() : 0;
+        $this->addSettings['load_ext_js_before_internal_js'] = !empty($this->settings['load_external_before_internal']) ? explode("\r\n", $this->settings['load_external_before_internal']) : array();
+        $this->addSettings['load_js_for_mobile_only'] = !empty($this->settings['load_js_for_mobile_only']) ? $this->settings['load_js_for_mobile_only'] : '';
+        $this->addSettings['w3_rand_key'] = $this->w3GetOption('w3_rand_key');
+		$this->addSettings['excludedImg'] = !empty($this->settings['exclude_lazy_load']) ? explode("\r\n",stripslashes($this->settings['exclude_lazy_load'])) : array();
+		$this->addSettings['excludedImg'] = array_merge($this->addSettings['excludedImg'],array('about:blank','gform_ajax'));
+        if (!empty($this->addSettings['is_mobile']) && !empty($this->addSettings['load_js_for_mobile_only'])) {
             $this->settings['load_combined_js'] = 'after_page_load';
         }
-        if (!empty($this->settings['separate_cache_for_mobile']) && $this->add_settings['is_mobile']) {
-            $this->add_settings['css_ext'] = 'mob.css';
-            $this->add_settings['js_ext'] = 'mob.js';
-            $this->add_settings['preload_css'] = !empty($this->settings['preload_css_mobile']) ? explode("\r\n", $this->settings['preload_css_mobile']) : array();
+        if (!empty($this->settings['separate_cache_for_mobile']) && $this->addSettings['is_mobile']) {
+            $this->addSettings['css_ext'] = 'mob.css';
+            $this->addSettings['js_ext'] = 'mob.js';
+            $this->addSettings['preload_css'] = !empty($this->settings['preload_css_mobile']) ? explode("\r\n", $this->settings['preload_css_mobile']) : array();
         } else {
-            $this->add_settings['css_ext'] = '.css';
-            $this->add_settings['js_ext'] = '.js';
-            $this->add_settings['preload_css'] = !empty($this->settings['preload_css']) ? explode("\r\n", $this->settings['preload_css']) : array();
+            $this->addSettings['css_ext'] = '.css';
+            $this->addSettings['js_ext'] = '.js';
+            $this->addSettings['preload_css'] = !empty($this->settings['preload_css']) ? explode("\r\n", $this->settings['preload_css']) : array();
         }
-        $this->add_settings['preload_css_url'] = array();
-        $this->add_settings['headers'] = function_exists('getallheaders') ? getallheaders() : array();
-        $this->add_settings['main_css_url'] = array();
-        $this->add_settings['lazy_load_js'] = array();
-        $this->add_settings['exclude_cdn'] = !empty($this->settings['exclude_cdn']) ? explode(',', str_replace(' ', '', $this->settings['exclude_cdn'])) : array();
-        $this->add_settings['exclude_cdn_path'] = !empty($this->settings['exclude_cdn_path']) ? explode(',', str_replace(' ', '', $this->settings['exclude_cdn_path'])) : '';
-        $this->add_settings['webp_enable'] = array();
-        $this->add_settings['webp_enable_instance'] = array($this->add_settings['upload_path']);
-        $this->add_settings['webp_enable_instance_replace'] = array($this->add_settings['webp_path']);
+        $this->addSettings['preload_css_url'] = array();
+        $this->addSettings['headers'] = function_exists('getallheaders') ? getallheaders() : array();
+        $this->addSettings['main_css_url'] = array();
+        $this->addSettings['lazy_load_js'] = array();
+        $this->addSettings['exclude_cdn'] = !empty($this->settings['exclude_cdn']) ? explode(',', str_replace(' ', '', $this->settings['exclude_cdn'])) : array();
+        $this->addSettings['exclude_cdn_path'] = !empty($this->settings['exclude_cdn_path']) ? explode(',', str_replace(' ', '', $this->settings['exclude_cdn_path'])) : '';
+        $this->addSettings['webp_enable'] = array();
+        $this->addSettings['webp_enable_instance'] = array($this->addSettings['uploadPath']);
+        $this->addSettings['webp_enable_instance_replace'] = array($this->addSettings['webp_path']);
         $this->settings['webp_png'] = isset($this->settings['webp_png']) ? $this->settings['webp_png'] : '';
         $this->settings['webp_jpg'] = !empty($this->settings['webp_jpg']) ? $this->settings['webp_jpg'] : '';
         if (!empty($this->settings['webp_jpg'])) {
-            $this->add_settings['webp_enable'] = array_merge($this->add_settings['webp_enable'], array('.jpg', '.jpeg'));
-            $this->add_settings['webp_enable_instance'] = array_merge($this->add_settings['webp_enable_instance'], array('.jpg?', '.jpeg?', '.jpg ', '.jpeg ', '.jpg"', '.jpeg"', ".jpg'", ".jpeg'", ".jpeg&", ".jpg&"));
-            $this->add_settings['webp_enable_instance_replace'] = array_merge($this->add_settings['webp_enable_instance_replace'], array('.jpgw3.webp?', '.jpegw3.webp?', '.jpgw3.webp ', '.jpegw3.webp ', '.jpgw3.webp"', '.jpegw3.webp"', ".jpgw3.webp'", ".jpegw3.webp'", ".jpegw3.webp&", ".jpgw3.webp&"));
+            $this->addSettings['webp_enable'] = array_merge($this->addSettings['webp_enable'], array('.jpg', '.jpeg'));
+            $this->addSettings['webp_enable_instance'] = array_merge($this->addSettings['webp_enable_instance'], array('.jpg?', '.jpeg?', '.jpg ', '.jpeg ', '.jpg"', '.jpeg"', ".jpg'", ".jpeg'", ".jpeg&", ".jpg&"));
+            $this->addSettings['webp_enable_instance_replace'] = array_merge($this->addSettings['webp_enable_instance_replace'], array('.jpgw3.webp?', '.jpegw3.webp?', '.jpgw3.webp ', '.jpegw3.webp ', '.jpgw3.webp"', '.jpegw3.webp"', ".jpgw3.webp'", ".jpegw3.webp'", ".jpegw3.webp&", ".jpgw3.webp&"));
         }
         if (!empty($this->settings['webp_png'])) {
-            $this->add_settings['webp_enable'] = array_merge($this->add_settings['webp_enable'], array('.png'));
-            $this->add_settings['webp_enable_instance'] = array_merge($this->add_settings['webp_enable_instance'], array('.png?', '.png ', '.png"', ".png'", ".png&"));
-            $this->add_settings['webp_enable_instance_replace'] = array_merge($this->add_settings['webp_enable_instance_replace'], array('.pngw3.webp?', '.pngw3.webp ', '.pngw3.webp"', ".pngw3.webp'", ".pngw3.webp&"));
+            $this->addSettings['webp_enable'] = array_merge($this->addSettings['webp_enable'], array('.png'));
+            $this->addSettings['webp_enable_instance'] = array_merge($this->addSettings['webp_enable_instance'], array('.png?', '.png ', '.png"', ".png'", ".png&"));
+            $this->addSettings['webp_enable_instance_replace'] = array_merge($this->addSettings['webp_enable_instance_replace'], array('.pngw3.webp?', '.pngw3.webp ', '.pngw3.webp"', ".pngw3.webp'", ".pngw3.webp&"));
         }
-        $this->add_settings['htaccess'] = 0;
+        $this->addSettings['htaccess'] = 0;
 
-        if (file_exists($this->add_settings['document_root'] . "/.htaccess")) {
-            $htaccess = $this->w3speedsterGetContents($this->add_settings['document_root'] . "/.htaccess");
+        if (file_exists($this->addSettings['documentRoot'] . "/.htaccess")) {
+            $htaccess = $this->w3speedsterGetContents($this->addSettings['documentRoot'] . "/.htaccess");
             if (strpos($htaccess, 'W3WEBP') !== false) {
-                $this->add_settings['htaccess'] = 1;
+                $this->addSettings['htaccess'] = 1;
             }
         }
-        $this->add_settings['critical_css'] = '';
-        $this->add_settings['starttime'] = $this->microtime_float();
-        if (!empty($this->add_settings['wp_get']['optimize_image'])) {
+        $this->addSettings['critical_css'] = '';
+        $this->addSettings['starttime'] = $this->microtime_float();
+        if (!empty($this->addSettings['w3_get']['optimize_image'])) {
             add_action('admin_init', array($this, 'w3_optimize_image'));
         }
         if (!empty($this->settings['remquery'])) {
@@ -130,16 +130,16 @@ class w3speedster extends w3core
             add_filter('script_loader_src', array($this, 'w3RemoveVerCssJs'), 9999, 2);
         }
 
-        if (!empty($this->settings['image_home_url'])) {
-            $this->settings['image_home_url'] = rtrim($this->settings['image_home_url']);
+        if (!empty($this->settings['imageHomeUrl'])) {
+            $this->settings['imageHomeUrl'] = rtrim($this->settings['imageHomeUrl']);
         }
         if (!empty($this->settings['lazy_load'])) {
             add_filter('wp_lazy_loading_enabled', '__return_false');
         }
-        $this->add_settings['w3UserLoggedIn'] = $this->w3UserLoggedIn();
-        $this->add_settings['fonts_api_links'] = array();
-        $this->add_settings['fonts_api_links_css2'] = array();
-        $this->add_settings['preload_resources'] = array();
+        $this->addSettings['w3UserLoggedIn'] = $this->w3UserLoggedIn();
+        $this->addSettings['fonts_api_links'] = array();
+        $this->addSettings['fonts_api_links_css2'] = array();
+        $this->addSettings['preload_resources'] = array();
         $this->settings['js_is_excluded'] = 0;
         $preventHtaccess = 0;
         if (!empty($this->settings['hook_prevent_generation_htaccess'])) {
@@ -148,34 +148,34 @@ class w3speedster extends w3core
 		}
 		$critical_css_file = $this->w3GetFullUrlCachePath().'/critical_css.json';
 		if(file_exists($critical_css_file)){
-			$this->add_settings['critical_css'] = $this->w3speedsterGetContents($critical_css_file);
+			$this->addSettings['critical_css'] = $this->w3speedsterGetContents($critical_css_file);
 		}
-		$this->add_settings['w3-wget'] = (int)$this->w3GetOption('w3-wget');
-		$this->add_settings['wptouch'] = false;
-        $exclude_cdn_arr = !empty($this->add_settings['exclude_cdn']) ? $this->add_settings['exclude_cdn'] : array();
-		$this->add_settings['blank_image_url'] = (($this->add_settings['enable_cdn'] && !in_array('.png',$exclude_cdn_arr)) ? str_replace($this->add_settings['site_url'],$this->add_settings['image_home_url'],$this->add_settings['upload_base_url']) : $this->add_settings['upload_base_url']).'/blank.png';
+		$this->addSettings['w3-wget'] = (int)$this->w3GetOption('w3-wget');
+		$this->addSettings['wptouch'] = false;
+        $exclude_cdn_arr = !empty($this->addSettings['exclude_cdn']) ? $this->addSettings['exclude_cdn'] : array();
+		$this->addSettings['blank_image_url'] = (($this->addSettings['enableCdn'] && !in_array('.png',$exclude_cdn_arr)) ? str_replace($this->addSettings['siteUrl'],$this->addSettings['imageHomeUrl'],$this->addSettings['upload_base_url']) : $this->addSettings['upload_base_url']).'/blank.png';
         if (is_admin() && !function_exists('w3_prevent_htaccess_generation') && $preventHtaccess == 0) {
-            if (!file_exists($this->add_settings['document_root'] . $this->add_settings['webp_path'] . '/.htaccess')) {
-                $this->w3CreateFile($this->add_settings['document_root'] . $this->add_settings['webp_path'] . '/.htaccess', '<IfModule mod_cgid.c>' . "\n" . 'Options -Indexes' . "\n" . '</IfModule>');
+            if (!file_exists($this->addSettings['documentRoot'] . $this->addSettings['webp_path'] . '/.htaccess')) {
+                $this->w3CreateFile($this->addSettings['documentRoot'] . $this->addSettings['webp_path'] . '/.htaccess', '<IfModule mod_cgid.c>' . "\n" . 'Options -Indexes' . "\n" . '</IfModule>');
             }
-            if (!file_exists($this->add_settings['root_cache_path'] . '/.htaccess')) {
-                $this->w3CreateFile($this->add_settings['root_cache_path'] . '/.htaccess', '<IfModule mod_cgid.c>' . "\n" . 'Options -Indexes' . "\n" . '</IfModule>' . "\n" . '<IfModule mod_rewrite.c>' . "\n" . 'RewriteEngine On' . "\n" . 'RewriteCond %{REQUEST_FILENAME} !-f' . "\n" . 'RewriteRule ^(.*)$ '.str_replace($this->add_settings['document_root'],'',W3SPEEDSTER_DIR).'/check.php?path=%{REQUEST_URI}&url=%{HTTP_REFERER}'.' [L]' . "\n" . '</IfModule>');
+            if (!file_exists($this->addSettings['rootCachePath'] . '/.htaccess')) {
+                $this->w3CreateFile($this->addSettings['rootCachePath'] . '/.htaccess', '<IfModule mod_cgid.c>' . "\n" . 'Options -Indexes' . "\n" . '</IfModule>' . "\n" . '<IfModule mod_rewrite.c>' . "\n" . 'RewriteEngine On' . "\n" . 'RewriteCond %{REQUEST_FILENAME} !-f' . "\n" . 'RewriteRule ^(.*)$ '.str_replace($this->addSettings['documentRoot'],'',W3SPEEDSTER_DIR).'/check.php?path=%{REQUEST_URI}&url=%{HTTP_REFERER}'.' [L]' . "\n" . '</IfModule>');
 				
             }
-            if (!file_exists($this->add_settings['critical_css_path'] . '/.htaccess')) {
-                $this->w3CreateFile($this->add_settings['critical_css_path'] . '/.htaccess', '<IfModule mod_cgid.c>' . "\n" . 'Options -Indexes' . "\n" . '</IfModule>');
+            if (!file_exists($this->addSettings['criticalCssPath'] . '/.htaccess')) {
+                $this->w3CreateFile($this->addSettings['criticalCssPath'] . '/.htaccess', '<IfModule mod_cgid.c>' . "\n" . 'Options -Indexes' . "\n" . '</IfModule>');
             }
         }
-		$this->add_settings['advanced_cache_exist'] = 0;
+		$this->addSettings['advanced_cache_exist'] = 0;
     }
 	function w3GetUploadsBasepath(){
 		$upload_dir = wp_upload_dir();
 		$base_url = $upload_dir['baseurl'];
 		$base_dir = $upload_dir['basedir'];
-		if($this->add_settings['isMultisiteSubDomain']){
-			$base_url = str_replace($this->add_settings['site_url'], $this->add_settings['network_site_url'],$base_url);
+		if($this->addSettings['isMultisiteSubDomain']){
+			$base_url = str_replace($this->addSettings['siteUrl'], $this->addSettings['network_site_url'],$base_url);
 		}
-		if (is_multisite() && $this->add_settings['isMultisiteSubDomain'] && strpos($base_url,'sites') !== false) {
+		if (is_multisite() && $this->addSettings['isMultisiteSubDomain'] && strpos($base_url,'sites') !== false) {
 			$site_path_parts = explode('/', trim($base_url, '/'));
 			$base_url = str_replace("/" . implode('/', array_splice($site_path_parts, -2)), '', $base_url);
 
@@ -196,6 +196,9 @@ class w3speedster extends w3core
         }
         return false;
     }
+	function getCssResponseUrl(){
+		return W3SPEEDSTER_URL.'includes/css-response.php';
+	}
     public function w3HeaderCheck()
     {
         return is_admin()
@@ -220,7 +223,7 @@ class w3speedster extends w3core
 
     private function isSpecialRoute()
     {
-        $current_url = $this->add_settings['full_url'];
+        $current_url = $this->addSettings['full_url'];
 
         if (preg_match('/(.*\/wp\/v2\/.*)/', $current_url)) {
             return true;
@@ -270,14 +273,14 @@ class w3speedster extends w3core
     }
     function w3speedsterValidateLicenseKey($key = '',$wget=0)
     {
-        $key = !empty($this->add_settings['wp_get']['key']) ? $this->add_settings['wp_get']['key'] : $key;
+        $key = !empty($this->addSettings['w3_get']['key']) ? $this->addSettings['w3_get']['key'] : $key;
         if (!empty($key)) {
             $options = array(
                         'license_id' => $key,
-                        'domain' => base64_encode($this->add_settings['home_url'])
+                        'domain' => base64_encode($this->addSettings['homeUrl'])
                     );
            
-            $response = $this->w3RemoteGet($this->add_settings['w3_api_url'] . '/get_license_detail.php', $options);
+            $response = $this->w3RemoteGet($this->addSettings['w3ApiUrl'] . '/get_license_detail.php', $options);
             if (!empty($response)) {
                 $res_arr = json_decode($response);
                 if ($res_arr[0] == 'success') {
@@ -317,11 +320,11 @@ class w3speedster extends w3core
     function w3PreloadCssPath($url = '')
     {
 			 
-        $url = empty($url) ? $this->add_settings['full_url_without_param'] : $url;
-        if (!empty($this->add_settings['preload_css_url'][$url])) {
-            return $this->add_settings['preload_css_url'][$url];
+        $url = empty($url) ? $this->addSettings['full_url_without_param'] : $url;
+        if (!empty($this->addSettings['preload_css_url'][$url])) {
+            return $this->addSettings['preload_css_url'][$url];
         }
-        if (rtrim($url, '/') == rtrim($this->add_settings['home_url'], '/')) {
+        if (rtrim($url, '/') == rtrim($this->addSettings['homeUrl'], '/')) {
 
         } else {
             global $wp_post_types;
@@ -354,14 +357,14 @@ class w3speedster extends w3core
             if (!is_page() && (is_single() || is_singular())) {
                 global $post;
                 if (!in_array($post->post_type, $separate_post_css)) {
-                    $url = rtrim($this->add_settings['home_url'], '/') . '/post/' . $post->post_type;
+                    $url = rtrim($this->addSettings['homeUrl'], '/') . '/post/' . $post->post_type;
                 }
             }
             if (is_404()) {
-                $url = rtrim($this->add_settings['home_url'], '/') . '/' . 'w3404';
+                $url = rtrim($this->addSettings['homeUrl'], '/') . '/' . 'w3404';
             }
             if (is_search() || is_page('search')) {
-                $url = rtrim($this->add_settings['home_url'], '/') . '/' . 'w3search';
+                $url = rtrim($this->addSettings['homeUrl'], '/') . '/' . 'w3search';
             }
 			if (is_archive() || is_category()) {
                 $cat = get_queried_object();
@@ -375,11 +378,11 @@ class w3speedster extends w3core
 					}
                 }
                 if (empty($separate_cat_css) || (is_array($separate_cat_css) && count($separate_cat_css) > 0 && !empty($catname) && !in_array($catname, $separate_cat_css))) {
-                    $url = rtrim($this->add_settings['home_url'], '/') . '/' . 'archive/' . $catname;
+                    $url = rtrim($this->addSettings['homeUrl'], '/') . '/' . 'archive/' . $catname;
                 }
             }
 			if (is_author()) {
-                $url = rtrim($this->add_settings['home_url'], '/') . '/' . 'author';
+                $url = rtrim($this->addSettings['homeUrl'], '/') . '/' . 'author';
             }
         }
         global $page;
@@ -393,12 +396,12 @@ class w3speedster extends w3core
 				$url = $url_arr[0];
 			}
         }
-		if(function_exists('w3_customize_critical_css_path')){
-			$url = w3_customize_critical_css_path($url);
+		if(function_exists('w3_customize_criticalCssPath')){
+			$url = w3_customize_criticalCssPath($url);
 		}
-        $full_url = str_replace($this->add_settings['secure'], '', rtrim($url, '/'));
+        $full_url = str_replace($this->addSettings['secure'], '', rtrim($url, '/'));
         $path = urldecode($this->w3GetCriticalCachePath($full_url));
-        $this->add_settings['preload_css_url'][$url] = $path;
+        $this->addSettings['preload_css_url'][$url] = $path;
         return $path;
     }
 
@@ -408,8 +411,8 @@ class w3speedster extends w3core
         if (w3CheckMultisite()) {
             $current_blog = '/' . get_current_blog_id();
         }
-        $cache_url = $this->add_settings['cache_url'] . $current_blog . (!empty($path) ? '/' . ltrim($path, '/') : '');
-        return $cache_url;
+        $cacheUrl= $this->addSettings['cacheUrl'] . $current_blog . (!empty($path) ? '/' . ltrim($path, '/') : '');
+        return $cacheUrl;
     }
 	
     function w3GetCachePath($path = '')
@@ -418,8 +421,8 @@ class w3speedster extends w3core
         if (w3CheckMultisite()) {
             $current_blog = '/' . get_current_blog_id();
         }
-        $cache_path = $this->add_settings['root_cache_path'] . $current_blog . (!empty($path) ? '/' . $path : '');
-        $this->w3CheckIfFolderExists($cache_path);
+        $cache_path = $this->addSettings['rootCachePath'] . $current_blog . (!empty($path) ? '/' . $path : '');
+        $this->w3CreateFolder($cache_path);
         return $cache_path;
     }
 	
@@ -429,8 +432,8 @@ class w3speedster extends w3core
         if (w3CheckMultisite()) {
             $current_blog = '/' . get_current_blog_id();
         }
-        $cache_path = $this->add_settings['critical_css_path'] . $current_blog . (!empty($path) ? '/' . $path : '');
-        $this->w3CheckIfFolderExists($cache_path);
+        $cache_path = $this->addSettings['criticalCssPath'] . $current_blog . (!empty($path) ? '/' . $path : '');
+        $this->w3CreateFolder($cache_path);
         return $cache_path;
     }
 	function w3Mkdir($path,$permission,$recusive){
@@ -439,7 +442,7 @@ class w3speedster extends w3core
 
     function w3RemoteGet($url,$params=array(),$method = 0){
         
-		if($this->add_settings['w3-wget'] == 3 || $method == 3){
+		if($this->addSettings['w3-wget'] == 3 || $method == 3){
             $query = '';
             if(!empty($params) && is_array($params) && count($params) > 0){
                 $query = strpos($url,'?') !== false ? '&' : '?';
@@ -450,7 +453,7 @@ class w3speedster extends w3core
             }
 			$response = $this->w3Wget($url.$query);
             if(!empty($response)){
-                if(!$this->add_settings['w3-wget']){
+                if(!$this->addSettings['w3-wget']){
                     w3UpdateOption('w3-wget',1);
                 }
 				return $response;
@@ -459,7 +462,7 @@ class w3speedster extends w3core
             }
         }
 
-        if(empty($this->add_settings['w3-wget']) || $this->add_settings['w3-wget'] == 1){
+        if(empty($this->addSettings['w3-wget']) || $this->addSettings['w3-wget'] == 1){
             $options = array(
                 'method' => 'GET',
                 'timeout' => 10,
@@ -476,7 +479,7 @@ class w3speedster extends w3core
 			
 			if (function_exists('wp_remote_get')) {
                 $response = wp_remote_get($url, $options);
-				//echo 'rocket'.$url.$this->add_settings['w3-wget']; print_R($options); 
+				//echo 'rocket'.$url.$this->addSettings['w3-wget']; print_R($options); 
 				//echo $url;
 				//print_r($response['response']['code']);echo $response['body']; exit;
 				if (!is_wp_error($response) && (int)$response['response']['code'] === 200 && !empty($response['body'])) {
@@ -488,10 +491,10 @@ class w3speedster extends w3core
 				return $this->w3RemoteGet($url,$params,2);
 			}
         }
-        if($this->add_settings['w3-wget'] == 2 || $method == 2) {
+        if($this->addSettings['w3-wget'] == 2 || $method == 2) {
             $response = $this->w3speedsterGetContents($url);
             if(!empty($response)){
-                if(!$this->add_settings['w3-wget']){
+                if(!$this->addSettings['w3-wget']){
                     w3UpdateOption('w3-wget',3);
                 }
                 return $response;
@@ -508,11 +511,11 @@ class w3speedster extends w3core
     function w3DeleteServerCache()
     {
         $options = array(
-					'url' => $this->add_settings['home_url'],
-					'key' => $this->settings['main_license_key']
+					'url' => $this->addSettings['homeUrl'],
+					'key' => $this->settings['mainLicenseKey']
 					);
 
-        $response = $this->w3RemoteGet($this->add_settings['w3_api_url'] . '/css/delete-css.php', $options);
+        $response = $this->w3RemoteGet($this->addSettings['w3ApiUrl'] . '/css/delete-css.php', $options);
         if (!empty($response)) {
             return true;
         } else {
@@ -539,10 +542,10 @@ class w3speedster extends w3core
                 if (empty($e_page)) {
                     continue;
                 }
-                if (empty($this->add_settings['wp_get']['testing']) && (is_home() || is_front_page()) && $this->add_settings['home_url'] == $e_page) {
+                if (empty($this->addSettings['w3_get']['testing']) && (is_home() || is_front_page()) && $this->addSettings['homeUrl'] == $e_page) {
                     return true;
-                } else if ($this->add_settings['home_url'] != $e_page) {
-                    if (strpos($this->add_settings['full_url'], $e_page) !== false) {
+                } else if ($this->addSettings['homeUrl'] != $e_page) {
+                    if (strpos($this->addSettings['full_url'], $e_page) !== false) {
                         return true;
                     }
                 }
@@ -592,8 +595,12 @@ class w3speedster extends w3core
 		return wp_json_encode($array);
 	}
 
-    
-	
+    function w3CheckNCreateFile($file, $content){
+		return $this->w3CreateFile($file, $this->w3JsonEncode($content));
+	}
+	function w3CheckNCreateFolder($cache_path){
+		return $this->w3CreateFolder($cache_path);
+	}
 	function hookCallbackFunction($code,...$args){
 		
 		
@@ -606,7 +613,7 @@ class w3speedster extends w3core
 	}
 	
 	function w3SpeedsterGetDataAdvancedCacheFile(){
-        $cachePath =  ($cachePath) ? $cachePath :str_replace('\\', '/',$this->add_settings['root_cache_path'] . '/html');
+        $cachePath =  ($cachePath) ? $cachePath :str_replace('\\', '/',$this->addSettings['rootCachePath'] . '/html');
 		
         $data = '<?php
         /**
@@ -705,9 +712,9 @@ class w3speedster extends w3core
 		return preg_match($pattern, $user_agent);
     }
 	function w3SpeedsterCreateHTMLCacheFile($html){
-		$path = $this->add_settings['full_url'];
+		$path = $this->addSettings['full_url'];
 		$parsed_url = wp_parse_url($path);
-		$userAgent = $this->add_settings['HTTP_USER_AGENT'];
+		$userAgent = $this->addSettings['HTTP_USER_AGENT'];
 		$isMobile = $this->w3speedsterIsMobileDevice($userAgent);
 		$mob_msg = '';
 		if(!empty($this->settings['html_caching_for_mobile']) && $isMobile){
@@ -719,7 +726,7 @@ class w3speedster extends w3core
 			} 
 		}*/
 		$path = "$_SERVER[REQUEST_URI]";
-		$currenturl = rtrim($this->add_settings['full_url'],'/');
+		$currenturl = rtrim($this->addSettings['full_url'],'/');
 		$this->set_cache_file_path();
 		if($msg = $this->w3NoHtmlCache($html)){
 			$html = preg_replace('/<\!--W3_PAGE_TYPE_[a-z]+-->/i', '', $html);
@@ -747,9 +754,9 @@ class w3speedster extends w3core
 		$endtime = $this->microtime_float();
 		$current_time = date("Y-m-d H:i:s");
 		if(!file_exists($fileName) || (file_exists($fileName) && (time() - filemtime($fileName)) > $this->settings['html_caching_expiry_time'])){
-			$this->w3CreateFile($fileName, $html.'<!--'.$mob_msg.' Cache Created By W3speedster Pro at '.$current_time.' in '.number_format($endtime - $this->add_settings['starttime'],2).' secs-->');
+			$this->w3CreateFile($fileName, $html.'<!--'.$mob_msg.' Cache Created By W3speedster Pro at '.$current_time.' in '.number_format($endtime - $this->addSettings['starttime'],2).' secs-->');
 		}
-		return $html.'<!--'.$mob_msg.' Cache Created By W3speedster Pro at '.$current_time.' in '.number_format($endtime - $this->add_settings['starttime'],2).' secs-->';
+		return $html.'<!--'.$mob_msg.' Cache Created By W3speedster Pro at '.$current_time.' in '.number_format($endtime - $this->addSettings['starttime'],2).' secs-->';
 		
 	}
 	public function w3speedsterGetHtaccessData(){
@@ -921,7 +928,7 @@ class w3speedster extends w3core
 		}
 	}
 	public function set_wptouch($status){
-		$this->add_settings['wptouch'] = $status;
+		$this->addSettings['wptouch'] = $status;
 	}
 
 	public function update_htaccess_mob($data){
@@ -929,7 +936,7 @@ class w3speedster extends w3core
 		$htaccess = "\n##### mobile #####\n";
 		$htaccess .= $out[0];
 
-		if($this->add_settings['wptouch']){
+		if($this->addSettings['wptouch']){
 			$wptouch_rule = "RewriteCond %{HTTP:Cookie} !wptouch-pro-view=desktop";
 			$htaccess = str_replace("RewriteCond %{HTTP:Profile}", $wptouch_rule."\n"."RewriteCond %{HTTP:Profile}", $htaccess);
 		}
@@ -1217,6 +1224,9 @@ class w3speedster extends w3core
 	function checkSecurityKey($key,$option){
 		return wp_verify_nonce($key,$option);
 	}
+	function is_404(){
+		return is_404();
+	}
 	function importData($data){
 		$import_text = (array)json_decode(stripcslashes($data));
 		if($import_text !== null){
@@ -1282,13 +1292,13 @@ class w3speedster extends w3core
 			$this->w3SpeedsterRemoveHtmlCacheCode();
 			$this->w3SpeedsterCheckCacheTrue();
 			if(file_exists($advancedCacheFile) && strpos($this->w3speedsterGetContents($advancedCacheFile),'Added By W3speedster Pro') === false){
-				$this->add_settings['advanced_cache_exist'] = 1;
+				$this->addSettings['advanced_cache_exist'] = 1;
 			}elseif(!file_exists($advancedCacheFile)){
 				$this->createAdvanceCacheFile($advancedCacheFile);
 			}
 			
 		}elseif(isset($_POST['html_caching']) && $_POST['html_caching'] == 'on' && $_POST['by_serve_cache_file'] == 'htaccess'){
-			$htaccessPath = $this->add_settings['document_root'] . "/.htaccess";
+			$htaccessPath = $this->addSettings['documentRoot'] . "/.htaccess";
 			if($htaccessContent = $this->w3speedsterGetContents($htaccessPath)){
 				$this->removeAdvanceCacheFile();
 				$htaccess = preg_replace("/#\s?BEGIN\s?W3HTMLCACHE.*?#\s?END\s?W3HTMLCACHE/s", "", $htaccessContent);
@@ -1312,7 +1322,7 @@ class w3speedster extends w3core
 		$advancedCacheFile = WP_CONTENT_DIR . '/advanced-cache.php';
 		// Check if the advanced-cache.php file exists and not by w3speedster
 		// @codingStandardsIgnoreLine
-		if (file_exists($advancedCacheFile) && strpos(file_get_contents($advancedCacheFile), 'Added By W3speedster Pro') === false && $this->add_settings['advanced_cache_exist'] == 1) {
+		if (file_exists($advancedCacheFile) && strpos(file_get_contents($advancedCacheFile), 'Added By W3speedster Pro') === false && $this->addSettings['advanced_cache_exist'] == 1) {
 			echo '<div class="advance-cache-exist-error">' . $this->translate_('The advanced-cache.php file already exists. Please delete this file and remove the plugin that created it.') . '</div>';
 			echo '<button type="button" class="btn force-delete-ac"><a href="' . $this->esc_url($_SERVER['REQUEST_URI']) . '&delete_ac=1">' . $this->translate_('Force Delete File') . '</a></button>';
 		}
@@ -1340,12 +1350,12 @@ class w3speedster extends w3core
 		wp_enqueue_script('wp-theme-plugin-editor');
 	}
 	function w3SpeedsterCriticalCachePurgeCallback() {
-		if ( !isset( $this->add_settings['wp_get']['_wpnonce'] ) || !$this->checkSecurityKey( $this->add_settings['wp_get']['_wpnonce'],'purge_critical_css') ) {
+		if ( !isset( $this->addSettings['w3_get']['_wpnonce'] ) || !$this->checkSecurityKey( $this->addSettings['w3_get']['_wpnonce'],'purge_critical_css') ) {
 			return 'Request not valid';
 		}
 		
-        $data_id = !empty($this->add_settings['wp_get']['data_id']) ? $this->add_settings['wp_get']['data_id'] : '';
-		$data_type = !empty($this->add_settings['wp_get']['data_type']) ? $this->add_settings['wp_get']['data_type'] : '';
+        $data_id = !empty($this->addSettings['w3_get']['data_id']) ? $this->addSettings['w3_get']['data_id'] : '';
+		$data_type = !empty($this->addSettings['w3_get']['data_type']) ? $this->addSettings['w3_get']['data_type'] : '';
         if(!empty($data_id) && !empty($data_type)){
 			if($data_type == 'category'){
 				$url = get_term_link($data_id);
@@ -1354,7 +1364,7 @@ class w3speedster extends w3core
 			}
 			$path = $this->w3PreloadCssPath($url);
 			$this->w3Rmfiles($path);
-			echo esc_html(round( (int)$this->w3GetOption('w3_speedup_filesize') / 1024/1024 , 2));
+			echo round( (int)$this->w3GetOption('w3_speedup_filesize') / 1024/1024 , 2);
 		}else{
 			$response =round( (int)$this->w3RemoveCriticalCssCacheFiles(),2);
 			echo esc_html($response);
@@ -1366,7 +1376,7 @@ class w3speedster extends w3core
      
 	
 	function w3ModifyHtaccess(){
-		$path = $this->add_settings['document_root'].'/';
+		$path = $this->addSettings['documentRoot'].'/';
 		if(!file_exists($path.".htaccess")){
 			if(isset($_SERVER["SERVER_SOFTWARE"]) && $_SERVER["SERVER_SOFTWARE"] && (preg_match("/iis/i", $_SERVER["SERVER_SOFTWARE"]) || preg_match("/nginx/i", $_SERVER["SERVER_SOFTWARE"]))){
 				//
@@ -1420,11 +1430,11 @@ class w3speedster extends w3core
 			$webp_disable_htaccess = function_exists('w3_disable_htaccess_wepb') ? w3_disable_htaccess_wepb() : 0;
 			
 			if(!empty($this->settings['hook_disable_htaccess_webp'] )){
-				$disable_htaccess_webp = isset($this->add_settings['disable_htaccess_webp']) ? $this->add_settings['disable_htaccess_webp']: 0;
+				$disable_htaccess_webp = isset($this->addSettings['disable_htaccess_webp']) ? $this->addSettings['disable_htaccess_webp']: 0;
 				$code = str_replace(array('$disable_htaccess_webp'),array('$args[0]'),$this->settings['hook_disable_htaccess_webp']);
-				$this->add_settings['disable_htaccess_webp'] = $this->hookCallbackFunction($code,$disable_htaccess_webp);
+				$this->addSettings['disable_htaccess_webp'] = $this->hookCallbackFunction($code,$disable_htaccess_webp);
 			}
-			if(empty($webp_disable_htaccess) && $this->add_settings['image_home_url'] == $this->add_settings['site_url']){
+			if(empty($webp_disable_htaccess) && $this->addSettings['imageHomeUrl'] == $this->addSettings['siteUrl']){
 				if(!empty($this->settings['webp_png']) || !empty($this->settings['webp_jpg'])){
 					if(strpos($htaccess,'# BEGIN W3WEBP') === false || strpos($htaccess,'# END W3WEBP') === false){
 						$htaccess = $this->w3InsertWebp($htaccess)."\n";
@@ -1541,7 +1551,7 @@ class w3speedster extends w3core
 		return $htaccess;
 	}
 	function w3InsertWebp($htaccess){
-		$wp_content_arr = explode('/',trim($this->add_settings['content_path'],'/'));
+		$wp_content_arr = explode('/',trim($this->addSettings['content_path'],'/'));
 		$wp_content = array_pop($wp_content_arr);
 		$wp_content_webp = $wp_content."/w3-webp/";
 		$basename = $wp_content_webp."$1w3.webp";
@@ -1592,7 +1602,7 @@ class w3speedster extends w3core
 		
 			$image_url = wp_get_attachment_url($post->ID );
 			
-			$theme_root_array = explode('/',$this->add_settings['theme_base_url']);
+			$theme_root_array = explode('/',$this->addSettings['theme_base_url']);
 			$theme_root = array_pop($theme_root_array);
 			$upload_dir = wp_upload_dir();
 			$webp_jpg = !empty($this->settings['webp_jpg']) ? 1 : 0;
@@ -1601,15 +1611,15 @@ class w3speedster extends w3core
 			$type = explode('.',$image_url);
 			$type = array_reverse($type);
 			if(strpos($image_url,$theme_root) !== false){
-				$img_root_path = rtrim($this->add_settings['theme_base_dir'],'/');
-				$img_root_url = rtrim($this->add_settings['theme_base_url'],'/');
+				$img_root_path = rtrim($this->addSettings['theme_base_dir'],'/');
+				$img_root_url = rtrim($this->addSettings['theme_base_url'],'/');
 			}else{
-				$img_root_path = $this->add_settings['upload_base_dir'];
-				$img_root_url = $this->add_settings['upload_base_url'];
+				$img_root_path = $this->addSettings['upload_base_dir'];
+				$img_root_url = $this->addSettings['upload_base_url'];
 				
 			}
 			$image_url_path = str_replace($img_root_url,$img_root_path,$image_url); 
-			$webp_path = str_replace($this->add_settings['upload_path'],$this->add_settings['webp_path'],$image_url_path);
+			$webp_path = str_replace($this->addSettings['uploadPath'],$this->addSettings['webp_path'],$image_url_path);
 			
 			$optimize_message = '';
 			if(is_file($webp_path.'w3.webp')){
@@ -1645,11 +1655,11 @@ class w3speedster extends w3core
 		exit;
 	}
 	function w3SpeedsterRemoveHtmlCacheCode(){
-			$htaccessPath = $this->add_settings['document_root'] . "/.htaccess";
+			$htaccessPath = $this->addSettings['documentRoot'] . "/.htaccess";
 			$htaccessContent = $this->w3speedsterGetContents($htaccessPath);
 			
 			// @codingStandardsIgnoreLine
-			if(is_file($this->add_settings['document_root'] . "/.htaccess") && is_writable($this->add_settings['document_root'] . "/.htaccess") && strpos($htaccessContent,'# BEGIN W3HTMLCACHE') !== false && strpos($htaccessContent,'# END W3HTMLCACHE') !== false){
+			if(is_file($this->addSettings['documentRoot'] . "/.htaccess") && is_writable($this->addSettings['documentRoot'] . "/.htaccess") && strpos($htaccessContent,'# BEGIN W3HTMLCACHE') !== false && strpos($htaccessContent,'# END W3HTMLCACHE') !== false){
 				$htaccess = preg_replace("/#\s?BEGIN\s?W3HTMLCACHE.*?#\s?END\s?W3HTMLCACHE/s", "", $htaccessContent);
 				$this->w3speedsterPutContents($htaccessPath, $htaccess);
 			}
@@ -1657,7 +1667,7 @@ class w3speedster extends w3core
 	function w3GetOption($option){
 		return w3GetOption($option);
 	}
-	function w3UpdateOption($option){
-		return w3GetOption($option);
+	function w3UpdateOption($option,$value,$autoload= null){
+		return w3UpdateOption($option,$value,$autoload);
 	}
 }

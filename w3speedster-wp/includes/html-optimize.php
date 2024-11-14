@@ -10,7 +10,6 @@ class w3speed_html_optimize extends w3speedster_js{
 	public $cacheMsg = "";
 	function w3Speedster($html){
 		$this->html = $html;
-		
 		$this->w3DebugTime('start optimization');
 		if(function_exists('w3speedup_pre_start_optimization')){
             $this->html = w3speedup_pre_start_optimization($this->html);
@@ -31,13 +30,13 @@ class w3speed_html_optimize extends w3speedster_js{
             return $this->html;
         }
 		
-		if(!empty($this->settings['hook_customize_add_settings'])){
-			$add_settings = $this->add_settings;
-			$code = str_replace('$add_settings','$args[0]',$this->settings['hook_customize_add_settings']);
-			$this->add_settings = $this->hookCallbackFunction($code,$this->add_settings);
+		if(!empty($this->settings['hook_customize_addSettings'])){
+			$addSettings = $this->addSettings;
+			$code = str_replace('$addSettings','$args[0]',$this->settings['hook_customize_addSettings']);
+			$this->addSettings = $this->hookCallbackFunction($code,$this->addSettings);
 		}
-		if(function_exists('w3speedup_customize_add_settings')){
-			$this->add_settings = w3speedup_customize_add_settings($this->add_settings);
+		if(function_exists('w3speedup_customize_addSettings')){
+			$this->addSettings = w3speedup_customize_addSettings($this->addSettings);
 		}
 		
 		if(function_exists('w3speedup_customize_main_settings')){
@@ -47,14 +46,14 @@ class w3speed_html_optimize extends w3speedster_js{
 		if(!empty($this->settings['hook_customize_main_settings'])){
 			$settings = $this->settings;
 			$code = str_replace('$settings','$args[0]',$this->settings['hook_customize_main_settings']);
-			$this->add_settings = $this->hookCallbackFunction($code,$this->add_settings);
+			$this->addSettings = $this->hookCallbackFunction($code,$this->addSettings);
 		}
-		$this->add_settings['disable_htaccess_webp'] = function_exists('w3_disable_htaccess_wepb') ? w3_disable_htaccess_wepb() : 0;
+		$this->addSettings['disable_htaccess_webp'] = function_exists('w3_disable_htaccess_wepb') ? w3_disable_htaccess_wepb() : 0;
 
 		if(!empty($this->settings['hook_disable_htaccess_webp'])){
-			$disable_htaccess_webp = $this->add_settings['disable_htaccess_webp'];
+			$disable_htaccess_webp = $this->addSettings['disable_htaccess_webp'];
 			$code = str_replace(array('$disable_htaccess_webp'),array('$args[0]'),$this->settings['hook_disable_htaccess_webp']);
-			$this->add_settings['disable_htaccess_webp'] = $this->hookCallbackFunction($code,$disable_htaccess_webp);
+			$this->addSettings['disable_htaccess_webp'] = $this->hookCallbackFunction($code,$disable_htaccess_webp);
 		}
 		if(!empty($this->settings['js'])){
 			$this-> w3CustomJsEnqueue();
@@ -163,15 +162,15 @@ class w3speed_html_optimize extends w3speedster_js{
 		$criticalCssInsertion = '';
 		$criticalReplace = [];
 		if(!$this->checkIgnoreCriticalCss()){
-			if(!empty($this->add_settings['wp_get']['w3_get_css_post_type'])){
-				$this->html .= 'rocket22'.W3SPEEDSTER_PLUGIN_VERSION.str_replace($this->add_settings['document_root'],'',$this->w3PreloadCssPath()).'--'.$this->add_settings['critical_css'].'--'.file_exists($this->w3PreloadCssPath().'/'.$this->add_settings['critical_css']);
+			if(!empty($this->addSettings['w3_get']['w3_get_css_post_type'])){
+				$this->html .= 'rocket22'.W3SPEEDSTER_PLUGIN_VERSION.str_replace($this->addSettings['documentRoot'],'',$this->w3PreloadCssPath()).'--'.$this->addSettings['critical_css'].'--'.file_exists($this->w3PreloadCssPath().'/'.$this->addSettings['critical_css']);
 			}
 			if(!empty($this->settings['load_critical_css'])){
-				if(!file_exists($this->w3PreloadCssPath().'/'.$this->add_settings['critical_css']) || filesize($this->w3PreloadCssPath().'/'.$this->add_settings['critical_css']) < 10){
-					@unlink($this->w3PreloadCssPath().'/'.$this->add_settings['critical_css']);
+				if(!file_exists($this->w3PreloadCssPath().'/'.$this->addSettings['critical_css']) || filesize($this->w3PreloadCssPath().'/'.$this->addSettings['critical_css']) < 10){
+					@unlink($this->w3PreloadCssPath().'/'.$this->addSettings['critical_css']);
 					$this->w3AddPageCriticalCss();
 				}else{
-					$critical_css = $this->w3speedsterGetContents($this->w3PreloadCssPath().'/'.$this->add_settings['critical_css']);
+					$critical_css = $this->w3speedsterGetContents($this->w3PreloadCssPath().'/'.$this->addSettings['critical_css']);
 					if(!empty($critical_css)){
 						//$this->w3InsertContentHead('{{main_w3_critical_css}}',2,$insertLink);
 						$criticalCssInsertion = 1;
@@ -185,17 +184,17 @@ class w3speed_html_optimize extends w3speedster_js{
 						if(!empty($this->settings['load_critical_css_style_tag'])){
 							$criticalReplace[0] = array('data-css="1" ','{{main_w3_critical_css}}');
 							$criticalReplace[1] = array('data-','<style id="w3speedster-critical-css">'.$critical_css.'</style>');
-							$this->add_settings['preload_resources']['critical_css'] = 1;
+							$this->addSettings['preload_resources']['critical_css'] = 1;
 						}else{
 							$enableCdnCss = 0;
 							if($this->w3CheckEnableCdnExt('.css')){
-								$upload_dir['baseurl'] = str_replace($this->add_settings['site_url'],$this->add_settings['image_home_url'],$upload_dir['baseurl']);
+								$upload_dir['baseurl'] = str_replace($this->addSettings['siteUrl'],$this->addSettings['imageHomeUrl'],$upload_dir['baseurl']);
 								$enableCdnCss = 1;
 							}
-							$critical_css_url = str_replace($this->add_settings['document_root'],($enableCdnCss ? $this->add_settings['image_home_url'] :$this->add_settings['site_url']),$this->w3PreloadCssPath().'/'.$this->add_settings['critical_css']);
+							$critical_css_url = str_replace($this->addSettings['documentRoot'],($enableCdnCss ? $this->addSettings['imageHomeUrl'] :$this->addSettings['siteUrl']),$this->w3PreloadCssPath().'/'.$this->addSettings['critical_css']);
 							$criticalReplace[0] = array('data-css="1" ','{{main_w3_critical_css}}');
 							$criticalReplace[1] = array('data-','<link rel="stylesheet" href="'.$critical_css_url.'"/>');
-							$this->add_settings['preload_resources']['critical_css'] = $critical_css_url;
+							$this->addSettings['preload_resources']['critical_css'] = $critical_css_url;
 						}
 					}else{
 						$this->w3AddPageCriticalCss();
@@ -231,20 +230,6 @@ class w3speed_html_optimize extends w3speedster_js{
 		$this->w3DebugTime('before final output');
         return $this->html;
     }
-	function getW3contentsInsertLink($all_links){
-		$insertLink = '';
-		if(!empty($all_links['link'])){
-			foreach($all_links['link'] as $link){
-				if(strpos($link,'stylesheet') !== false){
-					$insertLink = $link;
-					break;
-				}
-			}
-		}else{
-			$insertLink = !empty($all_links['script'][0]) ? $all_links['script'][0] : '';
-		}
-		return $insertLink;
-	}
 	public function w3HeaderCheck() {
         return is_admin()
 			|| $this->isSpecialContentType()
@@ -256,7 +241,7 @@ class w3speed_html_optimize extends w3speedster_js{
 	}
 
    private function isSpecialContentType() {
-		if($this->w3Endswith($this->add_settings['full_url'],'.xml') || $this->w3Endswith($this->add_settings['full_url'],'.xsl')){
+		if($this->w3Endswith($this->addSettings['full_url'],'.xml') || $this->w3Endswith($this->addSettings['full_url'],'.xsl')){
         	return true;
         }
 
@@ -264,7 +249,7 @@ class w3speed_html_optimize extends w3speedster_js{
     }
 
     private function isSpecialRoute() {
-		$current_url = $this->add_settings['full_url'];
+		$current_url = $this->addSettings['full_url'];
 
 		if( preg_match('/(.*\/wp\/v2\/.*)/', $current_url) ) {
 			return true;
@@ -332,7 +317,7 @@ class w3speed_html_optimize extends w3speedster_js{
 		$this->current_page_type = isset($out[1]) ? $out[1] : false;
 	}
 	public function isCommenter(){
-		$commenter = wp_get_current_commenter();
+		$commenter = function_exists('wp_get_current_commenter') ? wp_get_current_commenter() : array();
 		return isset($commenter["comment_author_email"]) && $commenter["comment_author_email"] ? true : false;
 	}
 	public function is_json(){
@@ -475,14 +460,14 @@ class w3speed_html_optimize extends w3speedster_js{
 		$uri_exclusions = array_merge($uri_exclusions,array('login','/admin','/wp-admin','/wp-login','json','sitemap'));
 		if(!empty($uri_exclusions)){
 			foreach ($uri_exclusions as $element) {
-				if (strpos($this->add_settings['full_url'],$element) != false) {
+				if (strpos($this->addSettings['full_url'],$element) != false) {
 					return true;
 				}
 			}
 		}
 		if($this->is_json() && (!defined('W3_CACHE_JSON') || (defined('W3_CACHE_JSON') && W3_CACHE_JSON !== true))){
 			return true;
-		}else if(preg_match("/Mediapartners-Google|Google\sWireless\sTranscoder/i", $this->add_settings['HTTP_USER_AGENT'])){
+		}else if(preg_match("/Mediapartners-Google|Google\sWireless\sTranscoder/i", $this->addSettings['HTTP_USER_AGENT'])){
 			return true;
 		}else if (is_user_logged_in() || $this->isCommenter()){
 			return true;
@@ -511,7 +496,7 @@ class w3speed_html_optimize extends w3speedster_js{
 		return false;
 	}
     function w3NoOptimization(){
-        if(!empty($this->add_settings['wp_get']['orgurl']) || strpos($this->html,'<body') === false){
+        if(!empty($this->addSettings['w3_get']['orgurl']) || strpos($this->html,'<body') === false){
             return true;
         }
         if (function_exists( 'is_amp_endpoint' ) && is_amp_endpoint()) {
@@ -520,7 +505,7 @@ class w3speed_html_optimize extends w3speedster_js{
 		if($this->w3HeaderCheck()){
 			return true;
 		}
-        if(empty($this->settings['optimization_on']) && empty($this->add_settings['wp_get']['w3_get_css_post_type']) && empty($this->add_settings['wp_get']['tester']) && empty($this->add_settings['wp_get']['testing'])){
+        if(empty($this->settings['optimization_on']) && empty($this->addSettings['w3_get']['w3_get_css_post_type']) && empty($this->addSettings['w3_get']['tester']) && empty($this->addSettings['w3_get']['testing'])){
              return true;
         }
 		if(function_exists('w3speedup_exclude_page_optimization')){
@@ -542,14 +527,14 @@ class w3speed_html_optimize extends w3speedster_js{
 		if(empty($this->settings['optimize_user_logged_in']) && function_exists('is_user_logged_in') && is_user_logged_in()){
 			return true;
 		}
-		if(empty($this->settings['optimize_query_parameters']) && $this->add_settings['full_url'] != $this->add_settings['full_url_without_param'] && empty($this->add_settings['wp_get']['tester'])){
+		if(empty($this->settings['optimize_query_parameters']) && $this->addSettings['full_url'] != $this->addSettings['full_url_without_param'] && empty($this->addSettings['w3_get']['tester'])){
 			return true;
 		}
         if(!empty($this->settings['exclude_pages_from_optimization']) && $this->w3CheckIfPageExcluded($this->settings['exclude_pages_from_optimization'])){
             return true;
         }
         global $current_user;
-        if((empty($this->add_settings['wp_get']['testing']) && is_404()) || strpos($this->html,'<title>Page Not Found') !== false || (!empty($current_user) && current_user_can('edit_others_pages')) ){
+        if((empty($this->addSettings['w3_get']['testing']) && is_404()) || strpos($this->html,'<title>Page Not Found') !== false || (!empty($current_user) && current_user_can('edit_others_pages')) ){
             return true;
         }
         return false;
@@ -620,11 +605,11 @@ class w3speed_html_optimize extends w3speedster_js{
 	
 	public function set_cache_file_path(){
 		$mob_msg = '';
-		$userAgent = $this->add_settings['HTTP_USER_AGENT'];
+		$userAgent = $this->addSettings['HTTP_USER_AGENT'];
 		$type = "/html";
 		$isMobile = $this->w3speedsterIsMobileDevice($userAgent);
 		$enableCachingGetPara = isset($this->settings['enable_caching_get_para']) ? 1 : 0;
-		$path = $this->add_settings['full_url'];
+		$path = $this->addSettings['full_url'];
 		$parsed_url = wp_parse_url($path);
 		$cachePath = ltrim($parsed_url['path'],'/');
 		if(!empty($this->settings['html_caching_for_mobile']) && $isMobile){
@@ -634,17 +619,17 @@ class w3speed_html_optimize extends w3speedster_js{
 		if(!empty($enableCachingGetPara) && !empty($parsed_url['query'])){
 			$cachePath .= $parsed_url['query'];
 		}
-		//$fileName = $this->add_settings['root_cache_path'].$type.$path1.'/index.html';
+		//$fileName = $this->addSettings['rootCachePath'].$type.$path1.'/index.html';
 		if($this->isPluginActive('gtranslate/gtranslate.php')){
 			if(isset($_SERVER["HTTP_X_GT_LANG"])){
-				$this->cacheFilePath = $this->add_settings['root_cache_path'].$type."/".$_SERVER["HTTP_X_GT_LANG"].$cachePath;
+				$this->cacheFilePath = $this->addSettings['rootCachePath'].$type."/".$_SERVER["HTTP_X_GT_LANG"].$cachePath;
 			}else if(isset($_SERVER["REDIRECT_URL"]) && $_SERVER["REDIRECT_URL"] != "/index.php"){
-				$this->cacheFilePath = $this->add_settings['root_cache_path'].$type."/".$_SERVER["REDIRECT_URL"];
+				$this->cacheFilePath = $this->addSettings['rootCachePath'].$type."/".$_SERVER["REDIRECT_URL"];
 			}else if(isset($_SERVER["REQUEST_URI"])){
-				$this->cacheFilePath = $this->add_settings['root_cache_path'].$type."/".$cachePath;
+				$this->cacheFilePath = $this->addSettings['rootCachePath'].$type."/".$cachePath;
 			}
 		}else{
-			$this->cacheFilePath = $this->add_settings['root_cache_path'].$type."/".$cachePath;
+			$this->cacheFilePath = $this->addSettings['rootCachePath'].$type."/".$cachePath;
 
 			// for /?s=
 			//$this->cacheFilePath = preg_replace("/(\/\?s\=)/", "$1/", $this->cacheFilePath);
@@ -698,7 +683,7 @@ class w3speed_html_optimize extends w3speedster_js{
 		foreach ($urls as $url) {
 
 			// Determine cache path
-			$cachePath = isset($this->add_settings['root_cache_path']) ? $this->add_settings['root_cache_path'] : str_replace('\\', '/', $this->add_settings['content_path'] . '/cache/w3-cache');
+			$cachePath = isset($this->addSettings['rootCachePath']) ? $this->addSettings['rootCachePath'] : str_replace('\\', '/', $this->addSettings['content_path'] . '/cache/w3-cache');
 			
 			// Extract path components
 			$pathComponents = explode("/", $url);

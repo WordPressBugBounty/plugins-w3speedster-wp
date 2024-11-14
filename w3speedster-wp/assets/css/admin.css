@@ -1587,7 +1587,17 @@ button#btn.expend-textarea svg.minimize{
 .html-cache-main .html-cache-row > .input_box .cdn_input_box button {
   margin: 5px 0px;
 }
-
+html body:not([class*="wp-"]) > main.admin-speedster .tab-panel {
+    top: 0;
+}
+html body:not([class*="wp-"]) > main.admin-speedster > .top_panel_container {
+    position: unset !important;
+}
+html body:not([class*="wp-"]) > main.admin-speedster {
+    margin: 0;
+    width: 100%;
+    min-height: 100vh;
+}
 @media(max-width:575px){
     main.admin-speedster .pagination {
         max-width: 90vw;
@@ -1647,5 +1657,5 @@ section#exclusions .way_to_psi .cdn_resources:not(:last-child) {
 @media(max-width:767px){
 details[open] > summary h4:after{
     width: calc(100% - 20px);
-}
+ }
 }

@@ -6,7 +6,7 @@ Plugin Name: W3Speedster Pro
 
 Description: Speedup the site with good scores on google page speed test and Gtmetrix
 
-Version: 7.29
+Version: 7.30
 
 Author: W3speedster
 
@@ -33,7 +33,7 @@ if (!defined('W3SPEEDSTER_WP_CONTENT_BASENAME')) {
 	define("W3SPEEDSTER_WP_CONTENT_DIR", dirname(W3SPEEDSTER_WP_PLUGIN_DIR));
 	define("W3SPEEDSTER_WP_CONTENT_BASENAME", basename(W3SPEEDSTER_WP_CONTENT_DIR));
 }
-define( 'W3SPEEDSTER_PLUGIN_VERSION', '7.29' );
+define( 'W3SPEEDSTER_PLUGIN_VERSION', '7.30' );
 define( 'W3SPEEDSTER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'W3SPEEDSTER_PLUGIN_FILE', __FILE__ );
 define( 'W3SPEEDSTER_URL', plugin_dir_url( __FILE__ ) );
@@ -132,7 +132,7 @@ function w3speedsterChangeImageName($metadata, $attachment_id, $context){
 
 add_filter('wp_generate_attachment_metadata','w3speedsterChangeImageName',10,3);
 add_action( 'w3speedster_image_optimization', 'w3speedsterImageOptimizationCallback' );
-add_action( 'w3speedup_preload_css_min', 'w3speedsterPreloadCssCallback' );
+add_action( 'w3speedup_preload_css_min', 'w3speedup_preload_cssCallback' );
 add_action( 'w3speedster_check_cron_needs_running', 'w3speedsterCheckCronNeedsRunningCallback' );
 function w3speedsterCheckCronNeedsRunningCallback(){
 	global $wpdb;
@@ -171,7 +171,7 @@ function w3speedsterCheckCronNeedsRunningCallback(){
 			}
 		}
 	}
-	$preload_css = w3GetOption('w3speedup_preload_css');
+	$preload_css = w3GetOption('w3speedsterPreloadCss');
 	if(count($preload_css) > 0 && !empty($result['enable_background_critical_css'])){
 		if ( ! wp_next_scheduled( 'w3speedup_preload_css_min' ) ) {
 			wp_schedule_event( time(), 'w3speedup_every_minute', 'w3speedup_preload_css_min' );
@@ -211,7 +211,7 @@ function w3GetCacheSizeCron(){
 }
 
 if(!empty($_GET['w3_preload_css'])){
-	add_action('wp_head','w3speedsterPreloadCssCallback');
+	add_action('wp_head','w3speedup_preload_cssCallback');
 }
 if(!empty($_GET['w3_put_preload_css'])){
 	add_action('wp_head','w3speedsterPutPreloadCssCallback');
@@ -221,13 +221,13 @@ function w3speedsterPutPreloadCssCallback(){
 	$w3_speedster->w3PutPreloadCss();
 	exit;	
 }
-add_action( 'wp_ajax_w3speedster_preload_css', 'w3speedsterPreloadCssAjaxCallback' );
-function w3speedsterPreloadCssAjaxCallback(){
+add_action( 'wp_ajax_w3speedster_preload_css', 'w3speedup_preload_cssAjaxCallback' );
+function w3speedup_preload_cssAjaxCallback(){
 	w3UpdateOption('w3speedup_critical_css_error','','no');
-	$response = w3speedsterPreloadCssCallback();
+	$response = w3speedup_preload_cssCallback();
 	$error = w3GetOption('w3speedup_critical_css_error');
 	$total = (int)w3GetOption('w3speedup_preload_css_total');
-	$que = w3GetOption('w3speedup_preload_css');
+	$que = w3GetOption('w3speedsterPreloadCss');
 	$created = $total - count(is_array($que) ? $que : array());
     $runningUrl = w3GetOption('w3speedup_critical_running_url');
 	if(!empty($error)){
@@ -245,7 +245,7 @@ function w3CheckMultisite(){
 	}
 }
 
-function w3GetOption($option){
+function w3GetOption($option,$arr=0){
 	if(w3CheckMultisite()){
 		global $w3_network_option;
 		if(empty($w3_network_option)){
@@ -280,12 +280,12 @@ function w3UpdateOption($option, $value, $autoload = null){
 		}
 	}
 }
-function w3speedsterPreloadCssCallback(){
-	if(is_user_logged_in() && current_user_can( 'w3speedster_settings' )){
+function w3speedup_preload_cssCallback(){
+	if((is_user_logged_in() && current_user_can( 'w3speedster_settings' )) || wp_doing_cron()){
 		$w3_speedster = new W3Speedster\w3speedster(); 
 		$response = $w3_speedster->w3GeneratePreloadCss();
 		if(!empty($response) && $response == "exists"){
-			$response = w3speedsterPreloadCssCallback();
+			$response = w3speedup_preload_cssCallback();
 		}
 		if(!empty($_GET['w3_preload_css'])){
 			exit;

@@ -175,7 +175,7 @@
 
 	&nbsp;
 	<h4>
-		<strong><?php echo ($img_remaining <= 0) ? $admin->translate_('Great Work!, all images are optimized') : $admin->translate_('Images to be optimized') . ' - <span class="progress-number">' . esc_html($img_remaining) . '</span>'; ?></strong>
+		<strong><?php echo ($img_remaining <= 0) ? $admin->translate_('Great Work!, all images are optimized') : $admin->translate_('Images to be optimized') . ' - <span class="progress-number">' . $img_remaining . '</span>'; ?></strong>
 	</h4>
 	<div class="progress-container">
 		<div class="progress progress-bar progress-bar-striped w3bg-success progress-bar-animated-img"
@@ -199,7 +199,7 @@
 	<script>
 		var start_optimization = 0;
 		var offset = 0;
-		var img_to_opt = <?php echo esc_html($img_to_opt); ?>;
+		var img_to_opt = <?php echo $img_to_opt; ?>;
 		jQuery('.start_image_optimization').click(function () {
 			if (!start_optimization) {
 				if (jQuery(this).hasClass('restart')) {

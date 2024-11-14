@@ -37,7 +37,7 @@
 			'hook_no_critical_css' => 'W3speedster No Critical Css',
 			'hook_customize_critical_css' => 'W3speedster Customize Critical Css',
 			'hook_disable_htaccess_webp' => 'W3speedster Disable Htaccess Webp',
-			'hook_customize_add_settings' => 'W3speedster Customize Add Settings',
+			'hook_customize_addSettings' => 'W3speedster Customize Add Settings',
 			'hook_customize_main_settings' => 'W3speedster Customize Main Settings',
 			'hook_sep_critical_post_type' => 'W3speedster Seprate Critical Css For Post Type',
 			'hook_sep_critical_cat' => 'W3speedster Seprate Critical Css For Category',
@@ -433,25 +433,25 @@ return $disable_htaccess_webp;
 						<?php $admin->translate('w3SpeedsterCustomizeAddSettings'); ?></p>
 					<p><strong><?php $admin->translate('Description:'); ?></strong><?php $admin->translate(' If you wish to change in variables and paths (URL), W3Speedster allows you to make changes in variables and paths with the help of this plugin function.'); ?>
 					</p>
-					<p><strong><?php $admin->translate('Parameter:'); ?></strong><?php $admin->translate('$add_settings- settings of the plugin.'); ?>
+					<p><strong><?php $admin->translate('Parameter:'); ?></strong><?php $admin->translate('$addSettings- settings of the plugin.'); ?>
 					</p>
-					<p><strong><?php $admin->translate('Return:'); ?></strong><?php $admin->translate('$add_settings – reflect the changes made in variable and path.'); ?>
+					<p><strong><?php $admin->translate('Return:'); ?></strong><?php $admin->translate('$addSettings – reflect the changes made in variable and path.'); ?>
 					</p>
 					<p><strong><?php $admin->translate('Example:'); ?></strong><br>
 					<pre>
-function w3SpeedsterCustomizeAddSettings($add_settings){
-$add_settings = str_replace(array(“mob.css”),array(“mobile.css”), $add_settings);
-return $add_settings;
+function w3SpeedsterCustomizeAddSettings($addSettings){
+$addSettings = str_replace(array(“mob.css”),array(“mobile.css”), $addSettings);
+return $addSettings;
 }
 </pre>
 					</p>
 				</span>
 			</label>
-			<code>function w3SpeedsterCustomizeAddSettings($add_settings){</code>
-			<textarea rows="5" cols="100" id="hook_customize_add_settings"
-				name="hook_customize_add_settings" class="hook_before_start"><?php if (!empty($result['hook_customize_add_settings']))
-					echo esc_html(stripslashes($result['hook_customize_add_settings'])); ?></textarea>
-			<code> return $add_settings; <br>}</code>
+			<code>function w3SpeedsterCustomizeAddSettings($addSettings){</code>
+			<textarea rows="5" cols="100" id="hook_customize_addSettings"
+				name="hook_customize_addSettings" class="hook_before_start"><?php if (!empty($result['hook_customize_addSettings']))
+					echo esc_html(stripslashes($result['hook_customize_addSettings'])); ?></textarea>
+			<code> return $addSettings; <br>}</code>
 		</div>
 
 		<div class="single-hook">
