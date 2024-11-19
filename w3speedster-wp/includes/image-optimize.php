@@ -14,7 +14,7 @@ class w3speedster_optimize_image extends w3speedster{
 			$file1 = get_attached_file($attach_id, true);
 			$response = $this->w3OptimizeAttachment($this->addSettings['upload_base_url'].'/'.trim($file,'/'), 0, false,$attach_id);
 			if(!empty($response['img'])	&& $response['img'] == 1){
-				$metadata = w3_get_attachment_metadata($attach_id);
+				$metadata = wp_get_attachment_metadata($attach_id);
 				if(!empty($metadata['sizes'])){
 					$file = explode('/',$metadata['file']);
 					array_pop($file);
@@ -52,7 +52,7 @@ class w3speedster_optimize_image extends w3speedster{
 	function w3speedsterChangeImageName($metadata, $attachment_id, $context){
 		
 		if(empty($metadata['file'])){
-			$metadata = w3_get_attachment_metadata($attachment_id);
+			$metadata = wp_get_attachment_metadata($attachment_id);
 		}
 		if(empty($metadata['file'])){
 			return $metadata;
@@ -269,7 +269,7 @@ class w3speedster_optimize_image extends w3speedster{
 		
 	}
 	function w3speedsterResizeImage( $file, $dest_path, $max_w) {
-		$image = w3_get_image_editor( $file );
+		$image = wp_get_image_editor( $file );
 		if ( !is_resource( $image ) )
 			return new WP_Error( 'error_loading_image', $image, $file );
 

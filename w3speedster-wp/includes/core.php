@@ -38,10 +38,11 @@ class w3core{
         return false;
     }
 	function getW3contentsInsertLink($all_links){
+		$head = $this->w3GetTagsData($this->html, '<head', '</head>');
 		$insertLink = '';
 		if(!empty($all_links['link'])){
 			foreach($all_links['link'] as $link){
-				if(strpos($link,'stylesheet') !== false){
+				if(strpos($link,'stylesheet') !== false && strpos($head,$link) !== false){
 					$insertLink = $link;
 					break;
 				}
@@ -871,7 +872,7 @@ class w3core{
     {
         $preload_html = '';
         $file = $this->w3GetFullUrlCachePath() . '/preload_css.json';
-        if (!file_exists($file) && !empty($this->addSettings['preload_resources'])) {
+        if (!file_exists($file) && filesize($file) > 0 && !empty($this->addSettings['preload_resources'])) {
             $this->w3CheckNCreateFile($file, $this->w3JsonEncode($this->addSettings['preload_resources']));
         }
         if (file_exists($file)) {

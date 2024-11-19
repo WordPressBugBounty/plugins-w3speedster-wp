@@ -6,7 +6,7 @@ Plugin Name: W3Speedster Pro
 
 Description: Speedup the site with good scores on google page speed test and Gtmetrix
 
-Version: 7.30
+Version: 7.31
 
 Author: W3speedster
 
@@ -33,7 +33,7 @@ if (!defined('W3SPEEDSTER_WP_CONTENT_BASENAME')) {
 	define("W3SPEEDSTER_WP_CONTENT_DIR", dirname(W3SPEEDSTER_WP_PLUGIN_DIR));
 	define("W3SPEEDSTER_WP_CONTENT_BASENAME", basename(W3SPEEDSTER_WP_CONTENT_DIR));
 }
-define( 'W3SPEEDSTER_PLUGIN_VERSION', '7.30' );
+define( 'W3SPEEDSTER_PLUGIN_VERSION', '7.31' );
 define( 'W3SPEEDSTER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'W3SPEEDSTER_PLUGIN_FILE', __FILE__ );
 define( 'W3SPEEDSTER_URL', plugin_dir_url( __FILE__ ) );

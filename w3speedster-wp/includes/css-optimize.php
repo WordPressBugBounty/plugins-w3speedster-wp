@@ -47,7 +47,7 @@ class w3speedster_css extends w3speedster{
     
             $match1 = str_replace(array('url(',')',"url('","')",')',"'",'"','&#039;'), '', html_entity_decode($match));
     
-            $match1 = trim($match1);
+            $match1 = $this->esc_url($match1);
 			
             if(strpos($match1,'//') > 7){
     
