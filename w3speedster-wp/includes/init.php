@@ -711,6 +711,240 @@ class w3speedster extends w3core
 		$pattern = "/(\bCrMo\b|CriOS|Android.*Chrome\/[.0-9]*\s(Mobile)?|\bDolfin\b|Opera.*Mini|Opera.*Mobi|Android.*Opera|Mobile.*OPR\/[0-9.]+|Coast\/[0-9.]+|Skyfire|Mobile\sSafari\/[.0-9]*\sEdge|IEMobile|MSIEMobile|fennec|firefox.*maemo|(Mobile|Tablet).*Firefox|Firefox.*Mobile|FxiOS|bolt|teashark|Blazer|Version.*Mobile.*Safari|Safari.*Mobile|MobileSafari|Tizen|UC.*Browser|UCWEB|baiduboxapp|baidubrowser|DiigoBrowser|Puffin|\bMercury\b|Obigo|NF-Browser|NokiaBrowser|OviBrowser|OneBrowser|TwonkyBeamBrowser|SEMC.*Browser|FlyFlow|Minimo|NetFront|Novarra-Vision|MQQBrowser|MicroMessenger|Android.*PaleMoon|Mobile.*PaleMoon|Android|blackberry|\bBB10\b|rim\stablet\sos|PalmOS|avantgo|blazer|elaine|hiptop|palm|plucker|xiino|Symbian|SymbOS|Series60|Series40|SYB-[0-9]+|\bS60\b|Windows\sCE.*(PPC|Smartphone|Mobile|[0-9]{3}x[0-9]{3})|Window\sMobile|Windows\sPhone\s[0-9.]+|WCE;|Windows\sPhone\s10.0|Windows\sPhone\s8.1|Windows\sPhone\s8.0|Windows\sPhone\sOS|XBLWP7|ZuneWP7|Windows\sNT\s6\.[23]\;\sARM\;|\biPhone.*Mobile|\biPod|\biPad|Apple-iPhone7C2|MeeGo|Maemo|J2ME\/|\bMIDP\b|\bCLDC\b|webOS|hpwOS|\bBada\b|BREW)/i";
 		return preg_match($pattern, $user_agent);
     }
+	
+	public function ignored($html){
+		$list = array(
+					"\/wp\-comments\-post\.php",
+					"\/wp\-login\.php",
+					"\/robots\.txt",
+					"\/wp\-cron\.php",
+					"\/wp\-content",
+					"\/wp\-admin",
+					"\/wp\-includes",
+					"\/index\.php",
+					"\/xmlrpc\.php",
+					"\/wp\-api\/",
+					"leaflet\-geojson\.php",
+					"\/clientarea\.php"
+				);
+		if($this->isPluginActive('woocommerce/woocommerce.php')){
+			if($this->current_page_type != "homepage"){
+				global $post;
+
+				if(isset($post->ID) && $post->ID){
+					if(function_exists("wc_get_page_id")){
+						$woocommerce_ids = array();
+
+						//wc_get_page_id('product')
+						//wc_get_page_id('product-category')
+						
+						array_push($woocommerce_ids, wc_get_page_id('cart'), wc_get_page_id('checkout'), wc_get_page_id('receipt'), wc_get_page_id('confirmation'), wc_get_page_id('myaccount'));
+
+						if (in_array($post->ID, $woocommerce_ids)) {
+							return true;
+						}
+					}
+				}
+
+				//"\/product"
+				//"\/product-category"
+
+				array_push($list, "\/cart\/?$", "\/checkout", "\/receipt", "\/confirmation", "\/wc-api\/");
+			}
+		}
+
+		if($this->isPluginActive('wp-easycart/wpeasycart.php')){
+			array_push($list, "\/cart");
+		}
+
+		if($this->isPluginActive('easy-digital-downloads/easy-digital-downloads.php')){
+			array_push($list, "\/cart", "\/checkout");
+		}
+
+		if(preg_match("/".implode("|", $list)."/i", $_SERVER["REQUEST_URI"])){
+			return true;
+		}
+
+		return false;
+	}
+	
+	public function set_current_page_content_type($html){
+		$content_type = false;
+		if(function_exists("headers_list")){
+			$headers = headers_list();
+			foreach($headers as $header){
+				if(preg_match("/Content-Type\:/i", $header)){
+					$content_type = preg_replace("/Content-Type\:\s(.+)/i", "$1", $header);
+				}
+			}
+		}
+
+		if(preg_match("/xml/i", $content_type)){
+			$this->current_page_content_type = "xml";
+		}else if(preg_match("/json/i", $content_type)){
+			$this->current_page_content_type = "json";
+		}else{
+			$this->current_page_content_type = "html";
+		}
+	}
+	
+	public function detect_current_page_type(){
+		if(preg_match("/\?/", $_SERVER["REQUEST_URI"])){
+			return true;
+		}
+		
+		if(preg_match("/^\/wp-json/", $_SERVER["REQUEST_URI"])){
+			return true;
+		}
+
+		if(is_front_page()){
+			echo "<!--W3_PAGE_TYPE_homepage-->";
+		}else if(is_category()){
+			echo "<!--W3_PAGE_TYPE_category-->";
+		}else if(is_tag()){
+			echo "<!--W3_PAGE_TYPE_tag-->";
+		}else if(is_singular('post')){
+			echo "<!--W3_PAGE_TYPE_post-->";
+		}else if(is_page()){
+			echo "<!--W3_PAGE_TYPE_page-->";
+		}else if(is_attachment()){
+			echo "<!--W3_PAGE_TYPE_attachment-->";
+		}else if(is_archive()){
+			echo "<!--W3_PAGE_TYPE_archive-->";
+		}
+	}
+	
+	public function set_current_page_type($html){
+		preg_match('/<\!--W3_PAGE_TYPE_([a-z]+)-->/i', $html, $out);
+
+		$this->current_page_type = isset($out[1]) ? $out[1] : false;
+	}
+	
+	public function isCommenter(){
+		$commenter = function_exists('wp_get_current_commenter') ? wp_get_current_commenter() : array();
+		return isset($commenter["comment_author_email"]) && $commenter["comment_author_email"] ? true : false;
+	}
+	
+	public function is_json(){
+		return $this->current_page_content_type == "json" ? true : false;
+	}
+	
+	public function isPasswordProtected($html){
+		if(preg_match("/action\=[\'\"].+postpass.*[\'\"]/", $html)){
+			return true;
+		}
+
+		foreach($_COOKIE as $key => $value){
+			if(preg_match("/wp\-postpass\_/", $key)){
+				return true;
+			}
+		}
+
+		return false;
+	}
+	
+	public function isWpLogin($html){
+		
+		if($GLOBALS["pagenow"] == "wp-login.php"){
+			return true;
+		}
+
+		return false;
+	}
+	
+	public function hasContactForm7WithCaptcha($html){
+		if(is_single() || is_page()){
+			if(preg_match("/<input[^\>]+_wpcf7_captcha[^\>]+>/i", $html)){
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	public function last_error($html = false){
+		if(function_exists("http_response_code") && (http_response_code() === 404)){
+			return true;
+		}
+
+		if(is_404()){
+			return true;
+		}
+
+		if(preg_match("/<body id\=\"error-page\">\s*<p>[^\>]+<\/p>\s*<\/body>/i", $html)){
+			return true;
+		}
+	}
+	
+	public function checkHtml($buffer){
+		if(!$this->is_html()){
+			return false;
+		}
+
+		if(preg_match('/<html[^\>]*>/si', $buffer) && preg_match('/<body[^\>]*>/si', $buffer)){
+			return false;
+		}
+		// if(strlen($buffer) > 10){
+		// 	return false;
+		// }
+
+		return true;
+	}
+	public function is_html(){
+		return $this->current_page_content_type == "html" ? true : false;
+	}
+	public function w3NoHtmlCache($html){
+		$this->set_current_page_type($html);
+		$this->set_current_page_content_type($html);
+
+		//$html = $this->checkShortCode($html);
+
+		// for Wordfence: not to cache 503 pages
+		if(defined('DONOTCACHEPAGE') && $this->isPluginActive('wordfence/wordfence.php')){
+			if(function_exists("http_response_code") && http_response_code() == 503){
+				return "<!-- DONOTCACHEPAGE is defined as TRUE -->";
+			}
+		}
+
+		$uri_exclusions = isset($this->settings['exclude_url_exclusions_html_cache']) ? explode("\r\n", $this->settings['exclude_url_exclusions_html_cache']) : array();
+		$uri_exclusions = array_merge($uri_exclusions,array('login','/admin','/wp-admin','/wp-login','json','sitemap'));
+		if(!empty($uri_exclusions)){
+			foreach ($uri_exclusions as $element) {
+				if (strpos($this->addSettings['full_url'],$element) != false) {
+					return '<!--page excluded from caching-->';
+				}
+			}
+		}
+		if($this->is_json() && (!defined('W3_CACHE_JSON') || (defined('W3_CACHE_JSON') && W3_CACHE_JSON !== true))){
+			return true;
+		}else if(preg_match("/Mediapartners-Google|Google\sWireless\sTranscoder/i", $this->addSettings['HTTP_USER_AGENT'])){
+			return true;
+		}else if (empty($this->settings['enable_loggedin_user_caching']) && (is_user_logged_in() || $this->isCommenter())){
+			return '<!--User logged In -->';
+		}else if($this->isPasswordProtected($html)){
+			return '<!-- Password protected content has been detected -->';
+		}else if($this->isWpLogin($html)){
+			return '<!-- wp-login.php -->';
+		}else if($this->hasContactForm7WithCaptcha($html)){
+			return '<!-- This page was not cached because ContactForm7\'s captcha -->';
+		}else if($this->last_error($html)){
+			return true;
+		}else if($this->ignored($html)){
+			return true;
+		}else if(isset($_GET["preview"])){
+			return '<!-- not cached -->';
+		}else if($this->checkHtml($html)){
+			return '<!-- html is corrupted -->';
+		}else if((function_exists("http_response_code")) && (http_response_code() == 301 || http_response_code() == 302)){
+			return '<!-- invalid reponse code '.http_response_code().' -->';
+		}else if(!$this->cacheFilePath){
+			return '<!-- permalink_structure ends with slash (/) but REQUEST_URI does not end with slash (/) -->';
+		}else{
+			return false;
+			
+		}
+		return false;
+	}
 	function w3SpeedsterCreateHTMLCacheFile($html){
 		$path = $this->addSettings['full_url'];
 		$parsed_url = wp_parse_url($path);
@@ -720,11 +954,6 @@ class w3speedster extends w3core
 		if(!empty($this->settings['html_caching_for_mobile']) && $isMobile){
 			$mob_msg = 'Mobile';
 		}
-		/*if (!empty($parsed_url['query'])) {
-			if (strpos($parsed_url['query'],"orgurl=") !== false) {
-				return $html;
-			} 
-		}*/
 		$path = "$_SERVER[REQUEST_URI]";
 		$currenturl = rtrim($this->addSettings['full_url'],'/');
 		$this->set_cache_file_path();
@@ -737,14 +966,11 @@ class w3speedster extends w3core
 		/*if(defined('WP_DEBUG') && WP_DEBUG){
 				return $html;
 		}*/
-		
 		$path1 = $parsed_url['path'];	
 		$enableCachingGetPara = isset($this->settings['enable_caching_get_para']) ? 1 : 0;
 		if($enableCachingGetPara == 0 && !empty($parsed_url['query'])){
-			return $html;
+			return $html.'<!-- not cached due to query parameter -->';
 		}
-		
-		
 		if(!empty($this->settings['minify_html_cache'])){
 			$html = preg_replace("/<\/html>\s+/", "</html>", $html);
 			$html = str_replace("\r", "", $html);

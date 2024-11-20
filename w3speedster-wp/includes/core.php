@@ -38,11 +38,10 @@ class w3core{
         return false;
     }
 	function getW3contentsInsertLink($all_links){
-		$head = $this->w3GetTagsData($this->html, '<head', '</head>');
 		$insertLink = '';
 		if(!empty($all_links['link'])){
 			foreach($all_links['link'] as $link){
-				if(strpos($link,'stylesheet') !== false && strpos($head,$link) !== false){
+				if(strpos($link,'stylesheet') !== false){
 					$insertLink = $link;
 					break;
 				}
