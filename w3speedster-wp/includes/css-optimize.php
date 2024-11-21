@@ -47,7 +47,7 @@ class w3speedster_css extends w3speedster{
     
             $match1 = str_replace(array('url(',')',"url('","')",')',"'",'"','&#039;'), '', html_entity_decode($match));
     
-            $match1 = $this->esc_url($match1);
+            $match1 = trim($match1);
 			
             if(strpos($match1,'//') > 7){
     
@@ -73,6 +73,7 @@ class w3speedster_css extends w3speedster{
 				}
             }
 			if(strpos($match,'fonts.googleapis.com') !== false){
+				$match1 = $this->esc_url($match1);
                 if(strpos($url,'index.php') !== false){
 					$string = $this->w3CombineGoogleFonts($match1) ? str_replace('@import '.$match.';','', $string) : $string;
 				}else{

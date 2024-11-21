@@ -1,8 +1,8 @@
 === W3SPEEDSTER ===
 Contributors: W3speedster
-Stable tag: 7.32
+Stable tag: 7.33
 Tags: website speed, page speed, lazy loading, css minification, js minification
-Version: 7.32
+Version: 7.33
 Tested up to: 6.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
