@@ -911,7 +911,7 @@ class w3speedster extends w3core
 		if(!empty($uri_exclusions)){
 			foreach ($uri_exclusions as $element) {
 				if (strpos($this->addSettings['full_url'],$element) != false) {
-					return '<!--page excluded from caching-->';
+					return true;
 				}
 			}
 		}

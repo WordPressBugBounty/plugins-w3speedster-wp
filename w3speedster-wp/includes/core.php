@@ -1361,7 +1361,7 @@ class w3core{
 		$img_size = array();
 		$w3_img_ext = '.'.pathinfo($path, PATHINFO_EXTENSION);
 		if($w3_img_ext == '.svg'){
-			list($img_size[0], $img_size[1],$alt) = $this->getSvgAttributes($img);
+			list($img_size[0], $img_size[1],$alt) = $this->getSvgAttributes($this->w3speedsterGetContents($path));
 		}else{
 			$img_size = strlen($path) < 4097 && file_exists($path) ? @getimagesize($path) : array();
 		}
